@@ -14,9 +14,13 @@ export function AuditForm() {
 
   useEffect(() => {
     const query = new URLSearchParams(window.location.search);
-    if (query.get("intent") === "call") setRequestType("call");
-    setServiceContext((query.get("service") || "").slice(0, 80));
-    setSectorContext((query.get("sector") || "").slice(0, 80));
+    const contextTimer = window.setTimeout(() => {
+      if (query.get("intent") === "call") setRequestType("call");
+      setServiceContext((query.get("service") || "").slice(0, 80));
+      setSectorContext((query.get("sector") || "").slice(0, 80));
+    }, 0);
+
+    return () => window.clearTimeout(contextTimer);
   }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -70,10 +74,10 @@ export function AuditForm() {
         <label><span>Phone <small>Optional</small></span><input name="phone" type="tel" autoComplete="tel" placeholder="+44" /></label>
         <label><span>Business name *</span><input name="businessName" autoComplete="organization" required placeholder="Your business" /></label>
         <label><span>Website</span><input name="websiteUrl" type="url" inputMode="url" placeholder="https://" /></label>
-        <label><span>Business type *</span><select name="businessType" required defaultValue=""><option value="" disabled>Select one</option><option>Restaurant</option><option>Salon or barber</option><option>Clinic or practice</option><option>Other service business</option></select></label>
+        <label><span>Business type *</span><select name="businessType" required defaultValue=""><option value="" disabled>Select one</option><option>Restaurant</option><option>Takeaway</option><option>Barber shop</option><option>Hair or beauty salon</option><option>Clinic or practice</option><option>Other service business</option></select></label>
       </div>
 
-      <label className="full-field"><span>What would you most like to improve? *</span><select name="challenge" required defaultValue=""><option value="" disabled>Select the closest fit</option><option>Website</option><option>Bookings or enquiries</option><option>Follow-up</option><option>Repetitive admin</option><option>Local visibility</option><option>Not sure yet</option></select></label>
+      <label className="full-field"><span>What would you most like to improve? *</span><select name="challenge" required defaultValue=""><option value="" disabled>Select the closest fit</option><option>Restaurant ordering or automation</option><option>Online booking system</option><option>Website design or rebuild</option><option>NFC review cards</option><option>AI or admin automation</option><option>Local visibility and growth</option><option>Not sure yet</option></select></label>
       <label className="full-field"><span>Tell us a little more</span><textarea name="details" rows={5} placeholder="What feels difficult today, and what would a better result look like?" /></label>
       <label className="honeypot" aria-hidden="true">Leave this field empty<input name="companyFax" tabIndex={-1} autoComplete="off" /></label>
       <label className="consent"><input type="checkbox" name="consent" value="yes" required /><span>By submitting this form, you agree that {siteConfig.brandName} may contact you about your enquiry. See our <a href="/privacy">Privacy Policy</a> for details.</span></label>

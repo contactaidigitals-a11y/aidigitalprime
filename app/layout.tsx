@@ -11,18 +11,18 @@ export const metadata: Metadata = {
     template: `%s | ${siteConfig.brandName}`,
   },
   description:
-    "Conversion-focused websites, booking systems and practical AI automation for UK restaurants, salons, barbers and clinics.",
+    "Websites, restaurant ordering, booking systems, AI automation and NFC review cards for UK restaurants, takeaways, salons, barbers and clinics.",
   openGraph: {
     type: "website",
     siteName: siteConfig.brandName,
     title: `${siteConfig.brandName} | Turn more enquiries into bookings`,
-    description: "Premium websites, booking systems and practical AI automation for UK service businesses.",
+    description: "Premium websites, ordering and booking systems, practical automation and NFC review tools for UK service businesses.",
     images: [{ url: "/og.png", width: 1200, height: 630, alt: `${siteConfig.brandName} — Turn more enquiries into bookings.` }],
   },
   twitter: {
     card: "summary_large_image",
     title: `${siteConfig.brandName} | Turn more enquiries into bookings`,
-    description: "Premium websites, booking systems and practical AI automation for UK service businesses.",
+    description: "Premium websites, ordering and booking systems, practical automation and NFC review tools for UK service businesses.",
     images: ["/og.png"],
   },
 };

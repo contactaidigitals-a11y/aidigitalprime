@@ -1,15 +1,14 @@
-import Link from "next/link";
 import { serviceLinks, siteConfig } from "../config";
 
 export function Brand() {
   return (
-    <Link className="brand" href="/" aria-label={`${siteConfig.brandName} home`}>
+    <a className="brand" href="/" aria-label={`${siteConfig.brandName} home`}>
       <span className="brand-mark" aria-hidden="true">
         <i />
         <i />
       </span>
       <span className="brand-name">{siteConfig.brandName}</span>
-    </Link>
+    </a>
   );
 }
 
@@ -26,19 +25,19 @@ export function SiteHeader({ dark = false }: { dark?: boolean }) {
       <Brand />
       <nav className="main-nav" aria-label="Main navigation">
         {primaryLinks.map((link) => (
-          <Link href={link.href} key={link.href}>{link.label}</Link>
+          <a href={link.href} key={link.href}>{link.label}</a>
         ))}
       </nav>
-      <Link className="header-cta" href={siteConfig.auditUrl}>
+      <a className="header-cta" href={siteConfig.auditUrl}>
         Free digital audit <span aria-hidden="true">↗</span>
-      </Link>
+      </a>
       <details className="mobile-menu">
         <summary aria-label="Open navigation"><span /><span /></summary>
         <nav aria-label="Mobile navigation">
           {primaryLinks.map((link) => (
-            <Link href={link.href} key={link.href}>{link.label}<span>↗</span></Link>
+            <a href={link.href} key={link.href}>{link.label}<span>↗</span></a>
           ))}
-          <Link className="mobile-audit-link" href={siteConfig.auditUrl}>Free digital audit</Link>
+          <a className="mobile-audit-link" href={siteConfig.auditUrl}>Free digital audit</a>
         </nav>
       </details>
     </header>
@@ -54,24 +53,24 @@ export function SiteFooter() {
       </div>
       <div className="footer-column">
         <span>Services</span>
-        {serviceLinks.map((link) => <Link href={link.href} key={link.href}>{link.label}</Link>)}
+        {serviceLinks.map((link) => <a href={link.href} key={link.href}>{link.label}</a>)}
       </div>
       <div className="footer-column">
         <span>Company</span>
-        <Link href="/#industries">Industries</Link>
-        <Link href="/#process">Process</Link>
-        <Link href="/#about">Why us</Link>
-        <Link href="/free-audit">Contact</Link>
+        <a href="/#industries">Industries</a>
+        <a href="/#process">Process</a>
+        <a href="/#about">Why us</a>
+        <a href="/free-audit">Contact</a>
       </div>
       <div className="footer-column">
         <span>Start a conversation</span>
         <a href={`mailto:${siteConfig.contactEmail}`}>{siteConfig.contactEmail}</a>
-        <Link className="footer-call" href={siteConfig.callUrl}>Book a call <span>↗</span></Link>
+        <a className="footer-call" href={siteConfig.callUrl}>Book a call <span>↗</span></a>
       </div>
       <div className="footer-bottom">
         <p>© {new Date().getFullYear()} {siteConfig.brandName}. All rights reserved.</p>
         <p>{siteConfig.location}</p>
-        <div><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link></div>
+        <div><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div>
       </div>
     </footer>
   );
@@ -82,5 +81,5 @@ export function Eyebrow({ children, light = false }: { children: React.ReactNode
 }
 
 export function ArrowLink({ href, children, light = false }: { href: string; children: React.ReactNode; light?: boolean }) {
-  return <Link className={`text-link${light ? " text-link-light" : ""}`} href={href}>{children}<span aria-hidden="true">→</span></Link>;
+  return <a className={`text-link${light ? " text-link-light" : ""}`} href={href}>{children}<span aria-hidden="true">→</span></a>;
 }

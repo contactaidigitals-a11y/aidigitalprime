@@ -9,8 +9,10 @@ export const siteConfig = {
 } as const;
 
 export const serviceLinks = [
-  { label: "Website Design", href: "/services/web-design" },
+  { label: "Restaurant Automation", href: "/services/restaurant-automation" },
   { label: "Booking Systems", href: "/services/booking-systems" },
+  { label: "Website Design", href: "/services/web-design" },
+  { label: "NFC Review Cards", href: "/services/nfc-review-cards" },
   { label: "AI Automation", href: "/services/ai-automation" },
   { label: "Digital Growth", href: "/services/digital-growth" },
 ] as const;

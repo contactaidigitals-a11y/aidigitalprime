@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { ArrowLink, Eyebrow, SiteFooter, SiteHeader } from "../components/SiteChrome";
 import { siteConfig } from "../config";
 import type { ServiceDetail } from "./service-data";
@@ -9,10 +8,10 @@ export function ServicePage({ service }: { service: ServiceDetail }) {
       <div className="service-hero-wrap">
         <SiteHeader dark />
         <section className="service-hero">
-          <div className="service-breadcrumb"><Link href="/services">Services</Link><span>/</span><b>{service.kicker}</b></div>
+          <div className="service-breadcrumb"><a href="/services">Services</a><span>/</span><b>{service.kicker}</b></div>
           <div className="service-hero-grid">
             <div><Eyebrow light>{service.index} · {service.kicker}</Eyebrow><h1>{service.title}</h1></div>
-            <div className="service-hero-copy"><p>{service.intro}</p><Link className="button button-acid" href={`${siteConfig.auditUrl}?service=${service.slug}`}>{service.cta}<span>↗</span></Link><small>No obligation. Start with a practical conversation.</small></div>
+            <div className="service-hero-copy"><p>{service.intro}</p><a className="button button-acid" href={`${siteConfig.auditUrl}?service=${service.slug}`}>{service.cta}<span>↗</span></a><small>No obligation. Start with a practical conversation.</small></div>
           </div>
           <div className="service-promise"><span>THE OUTCOME</span><p>{service.promise}</p><i>{service.index}</i></div>
         </section>
@@ -39,7 +38,7 @@ export function ServicePage({ service }: { service: ServiceDetail }) {
       </section>
 
       <section className="service-final-cta">
-        <Eyebrow light>Your next move</Eyebrow><h2>Make the journey easier to choose.</h2><p>Start with a free audit or a focused discovery call. We’ll identify the most valuable next step.</p><div><Link className="button button-acid" href={`${siteConfig.auditUrl}?service=${service.slug}`}>{service.cta}<span>↗</span></Link><ArrowLink light href={siteConfig.callUrl}>Book a discovery call</ArrowLink></div>
+        <Eyebrow light>Your next move</Eyebrow><h2>Make the journey easier to choose.</h2><p>Start with a free audit or a focused discovery call. We’ll identify the most valuable next step.</p><div><a className="button button-acid" href={`${siteConfig.auditUrl}?service=${service.slug}`}>{service.cta}<span>↗</span></a><ArrowLink light href={siteConfig.callUrl}>Book a discovery call</ArrowLink></div>
       </section>
       <SiteFooter />
     </main>

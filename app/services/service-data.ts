@@ -13,9 +13,34 @@ export type ServiceDetail = {
 };
 
 export const services: Record<string, ServiceDetail> = {
+  "restaurant-automation": {
+    slug: "restaurant-automation",
+    index: "01",
+    kicker: "Restaurant ordering & automation",
+    title: "Take more orders without creating more admin.",
+    intro: "We design connected ordering and enquiry journeys for restaurants and takeaways—from menus and collection or delivery choices to confirmations and team hand-off. Where sensible, we connect the tools you already use.",
+    promise: "A simpler route from hungry customer to confirmed order, with fewer missed messages and manual steps.",
+    problems: [
+      { title: "Orders arrive everywhere", text: "Phone calls, direct messages and website enquiries are easy to miss during a busy service." },
+      { title: "Customers cannot order quickly", text: "Menus are difficult to use on mobile, options are unclear or the route to checkout takes too long." },
+      { title: "Staff repeat the same admin", text: "Teams manually confirm orders, copy details and route catering or event enquiries." },
+    ],
+    inclusions: ["Online ordering flow for collection or delivery", "Digital menu, options and add-on setup", "Payment integration where required", "Automatic customer confirmations and team alerts", "Reservation, catering and private-hire enquiry routing", "Connection to existing systems where practical"],
+    examples: [
+      { sector: "Restaurants", title: "Direct orders from your own website", text: "Give guests a clear mobile journey from menu choice to payment and confirmation." },
+      { sector: "Takeaways", title: "Fewer phone interruptions", text: "Capture collection or delivery details accurately and send the order to the right place." },
+      { sector: "Events & catering", title: "Better-qualified enquiries", text: "Collect dates, guest numbers, budget and requirements before the team follows up." },
+    ],
+    faqs: [
+      { question: "Can you connect our existing ordering or POS system?", answer: "Often, yes. We first review the integrations available and recommend the cleanest route, without replacing a tool that already works well." },
+      { question: "Can customers pay online?", answer: "Yes, where online payment is part of the agreed setup. We can connect an appropriate payment provider and make the checkout journey clear on mobile." },
+      { question: "Does this work for reservations and private events too?", answer: "Yes. We can keep standard orders simple while routing reservations, group dining, catering and private-hire enquiries through dedicated flows." },
+    ],
+    cta: "Plan your ordering system",
+  },
   "web-design": {
     slug: "web-design",
-    index: "01",
+    index: "03",
     kicker: "Website design & development",
     title: "A website that earns trust—and makes the next step obvious.",
     intro: "We design polished, mobile-first websites for service businesses that need to turn attention into reservations, appointments and qualified enquiries.",
@@ -65,7 +90,7 @@ export const services: Record<string, ServiceDetail> = {
   },
   "ai-automation": {
     slug: "ai-automation",
-    index: "03",
+    index: "05",
     kicker: "AI automation",
     title: "Automate repetitive work without losing the human touch.",
     intro: "We use AI where it adds practical value: helping your team respond faster, organise enquiries and reduce repetitive admin while keeping people in control.",
@@ -88,9 +113,34 @@ export const services: Record<string, ServiceDetail> = {
     ],
     cta: "Explore an automation opportunity",
   },
+  "nfc-review-cards": {
+    slug: "nfc-review-cards",
+    index: "04",
+    kicker: "NFC review cards & setup",
+    title: "Make leaving a genuine Google review as easy as one tap.",
+    intro: "We programme NFC cards or tags to open the correct Google review page, add a QR-code backup and help your team use them at the right customer moments.",
+    promise: "A professional, low-friction review request system your team can start using immediately.",
+    problems: [
+      { title: "Happy customers forget", text: "People intend to leave a review, but the moment passes once they leave your venue." },
+      { title: "The link is hard to find", text: "Searching for the business, finding the right profile and opening the review screen creates unnecessary friction." },
+      { title: "Staff ask inconsistently", text: "Without a simple tool and clear guidance, review requests depend on memory and confidence." },
+    ],
+    inclusions: ["NFC card or tag programming", "Direct Google review destination setup", "QR-code backup for every device", "Simple branded instruction artwork", "Placement and customer-moment guidance", "Staff rollout and usage guidance"],
+    examples: [
+      { sector: "Restaurants", title: "A tap at the end of a great meal", text: "Place a programmed card at the bill or counter so guests can reach the review screen in seconds." },
+      { sector: "Salons & barbers", title: "Turn the finished look into feedback", text: "Make the review request part of a natural checkout conversation without adding pressure." },
+      { sector: "Clinics & practices", title: "A discreet, consistent request", text: "Offer an easy route to honest feedback while respecting the tone and privacy of the setting." },
+    ],
+    faqs: [
+      { question: "Do customers need an app?", answer: "No. Most modern phones open the link when the customer taps the NFC card. The QR code provides a simple backup." },
+      { question: "Can the card link directly to our Google review screen?", answer: "Yes. We configure the correct destination so the customer avoids extra searching and unnecessary steps." },
+      { question: "Do you filter negative reviews?", answer: "No. The setup should invite honest feedback from every customer; it never filters, gates or manipulates reviews." },
+    ],
+    cta: "Set up your review cards",
+  },
   "digital-growth": {
     slug: "digital-growth",
-    index: "04",
+    index: "06",
     kicker: "Digital growth & optimisation",
     title: "Improve what happens after your website goes live.",
     intro: "Use clear data and focused improvements to strengthen local visibility, understand customer behaviour and remove friction from the digital journey.",
