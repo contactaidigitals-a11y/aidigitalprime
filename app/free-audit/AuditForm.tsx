@@ -1,16 +1,20 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import { siteConfig } from "../config";
+import { WhatsAppLink } from "../components/WhatsAppLink";
 
 type FormStatus = "idle" | "sending" | "success" | "error";
 
 export function AuditForm({ source = "Website" }: { source?: string }) {
   const [status, setStatus] = useState<FormStatus>("idle");
   const [message, setMessage] = useState("");
+  const submitting = useRef(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitting.current) return;
+    submitting.current = true;
     setStatus("sending");
     setMessage("");
     const form = event.currentTarget;
@@ -23,7 +27,8 @@ export function AuditForm({ source = "Website" }: { source?: string }) {
         body: JSON.stringify(payload),
       });
       const result: unknown = await response.json().catch(() => null);
-      if (!response.ok) {
+      const accepted = result && typeof result === "object" && "ok" in result && result.ok === true;
+      if (!response.ok || !accepted) {
         const failureMessage = result && typeof result === "object" && "message" in result && typeof result.message === "string"
           ? result.message
           : "We couldn’t send your request right now. Please try again shortly.";
@@ -34,6 +39,8 @@ export function AuditForm({ source = "Website" }: { source?: string }) {
     } catch (error) {
       setStatus("error");
       setMessage(error instanceof Error && !(error instanceof TypeError) ? error.message : "We couldn’t connect. Please check your connection and try again.");
+    } finally {
+      submitting.current = false;
     }
   }
 
@@ -45,12 +52,14 @@ export function AuditForm({ source = "Website" }: { source?: string }) {
         <h2>Thank you. We’ll review your business first.</h2>
         <p>We’ll call you to understand your priorities and arrange a suitable time for the free visit.</p>
         <button type="button" onClick={() => setStatus("idle")}>Send another request</button>
+        <div className="form-contact-options"><p>Want to add anything?</p><WhatsAppLink /></div>
       </div>
     );
   }
 
   return (
-    <form className="audit-form compact-audit-form" onSubmit={handleSubmit}>
+    <>
+    <form className="audit-form compact-audit-form" onSubmit={handleSubmit} aria-busy={status === "sending"}>
       <input type="hidden" name="requestType" value="free-on-site-business-audit" />
       <input type="hidden" name="sourcePage" value={source} />
       <div className="field-grid field-grid-compact">
@@ -60,7 +69,7 @@ export function AuditForm({ source = "Website" }: { source?: string }) {
         </label>
         <label>
           <span>Business name *</span>
-          <input name="businessName" autoComplete="organization" required maxLength={140} placeholder="Restaurant or venue name" />
+          <input name="businessName" autoComplete="organization" required maxLength={140} placeholder="Your business name" />
         </label>
         <label>
           <span>Phone number *</span>
@@ -75,5 +84,12 @@ export function AuditForm({ source = "Website" }: { source?: string }) {
       </button>
       <p className="form-note">No obligation. We review your business before calling.</p>
     </form>
+    <div className="form-contact-options">
+      <p>Prefer to message us directly?</p>
+      <WhatsAppLink />
+      <a className="form-email-link" href={`mailto:${siteConfig.contactEmail}`}>Or email {siteConfig.contactEmail}</a>
+      <small>WhatsApp opens separately. Your form details are not shared unless you send them.</small>
+    </div>
+    </>
   );
 }

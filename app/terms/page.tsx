@@ -8,7 +8,7 @@ export default function TermsPage() {
   return (
     <LegalPage title="Website terms" intro="The basic terms that apply when you browse this website or request a free business audit.">
       <h2>Website information</h2>
-      <p>The content on this website is general information about hospitality business improvement and potential digital services. It is not a binding proposal, a guarantee of results or professional legal, financial or tax advice.</p>
+      <p>The content on this website is general information about business improvement and potential digital services. It is not a binding proposal, a guarantee of results or professional legal, financial or tax advice.</p>
 
       <h2>Free business audits</h2>
       <p>Free on-site audits are subject to suitability, availability and our current travel area. Submitting the form is a request, not a confirmed appointment. We will contact you to understand the business and agree whether and when a visit can take place.</p>

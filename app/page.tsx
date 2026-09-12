@@ -8,8 +8,8 @@ const outcomes = [
     number: "01",
     kicker: "Demand",
     title: "Get more customers",
-    text: "Help more local guests discover your business, trust what they see and choose you.",
-    items: ["A stronger website and menu journey", "Google visibility and local offers", "NFC and QR tools that make reviews easier"],
+    text: "Help more local customers discover your business, understand what you offer and choose you.",
+    items: ["A clearer website and enquiry journey", "Google visibility and local offers", "NFC and QR tools that make reviews easier"],
     result: "More visibility. More trust. More reasons to visit.",
   },
   {
@@ -18,7 +18,7 @@ const outcomes = [
     kicker: "Efficiency",
     title: "Improve operations",
     text: "Remove avoidable steps from ordering, enquiries and everyday admin so your team can focus on service.",
-    items: ["Online, collection and table-order flows", "Clear confirmations and team alerts", "Practical automations around your workflow"],
+    items: ["Booking, ordering and enquiry systems", "Clear confirmations and team alerts", "Practical automations around your workflow"],
     result: "Less friction. Fewer missed requests. Smoother service.",
   },
   {
@@ -26,8 +26,8 @@ const outcomes = [
     number: "03",
     kicker: "Clarity",
     title: "Free business audit",
-    text: "We visit your restaurant, understand how it runs and identify the improvements worth prioritising.",
-    items: ["Customer demand and guest journey review", "Ordering, service and system review", "A written report with prioritised actions"],
+    text: "We visit your business, understand how it runs and identify the improvements worth prioritising.",
+    items: ["Website and customer journey review", "Bookings, enquiries and system review", "A written report with prioritised actions"],
     result: "Relevant recommendations, without the generic sales pitch.",
   },
 ];
@@ -39,33 +39,37 @@ const solutions = [
     text: "A simpler way to receive and manage the orders that matter to your business.",
     items: ["Collection or delivery order capture", "Table ordering and QR menu journeys", "Automatic confirmations and team notifications"],
     label: "Orders",
+    href: "/services/restaurant-automation",
   },
   {
     number: "02",
     title: "Websites & local visibility",
     text: "A professional digital front door that makes your offer clear and turns local interest into action.",
-    items: ["Fast, mobile-first restaurant websites", "Menus, offers and conversion-focused pages", "Google presence and local-search foundations"],
+    items: ["Fast, mobile-first business websites", "Clear service pages and enquiry forms", "Google presence and local-search foundations"],
     label: "Growth",
+    href: "/services/web-design",
   },
   {
     number: "03",
     title: "NFC review systems",
-    text: "Configured cards and stands that make it easy for happy guests to leave a Google review.",
+    text: "Configured cards and stands that make it easy for customers to share an honest Google review.",
     items: ["NFC card or table-stand programming", "Direct Google review link with QR backup", "Placement and team rollout guidance"],
     label: "Reputation",
+    href: "/services/nfc-review-cards",
   },
   {
     number: "04",
-    title: "Reservations & practical automation",
-    text: "Joined-up digital tools that reduce repetitive work and keep customer requests moving.",
-    items: ["Reservation and event-enquiry journeys", "Reminders, routing and follow-up flows", "Simple admin tools built around your team"],
-    label: "Operations",
+    title: "Booking systems & automation",
+    text: "Online appointments for barbers, salons, clinics and service businesses, with less back-and-forth for your team.",
+    items: ["Appointment calendars and booking pages", "Confirmations, reminders and enquiry routing", "AI-assisted workflows and admin automation"],
+    label: "Bookings",
+    href: "/services/booking-systems",
   },
 ];
 
 const process = [
-  { number: "01", title: "Request your visit", text: "Leave your name, business name and phone number. We review your restaurant before contacting you." },
-  { number: "02", title: "We visit your business", text: "We discuss your goals and look at customer demand, the guest journey, operations and current systems." },
+  { number: "01", title: "Request your visit", text: "Leave your name, business name and phone number. We review your business before contacting you." },
+  { number: "02", title: "We visit your business", text: "We discuss your goals and look at the customer journey, bookings, orders and current systems." },
   { number: "03", title: "Receive a practical plan", text: "We prepare a written report and explain the strongest opportunities in person. You decide whether any recommendation goes further." },
 ];
 
@@ -76,9 +80,9 @@ export default function Home() {
 
       <section className="hospitality-hero">
         <div className="hospitality-hero-copy">
-          <Eyebrow>Independent hospitality · Harlow & Essex</Eyebrow>
-          <h1>More customers.<br />Smoother operations.<br /><em>A stronger restaurant.</em></h1>
-          <p>AI Digital Prime helps independent restaurants uncover opportunities, solve practical problems and improve performance. It starts with a free on-site business audit, shaped around your goals and the way your business works.</p>
+          <Eyebrow>Local businesses · Harlow & nearby areas</Eyebrow>
+          <h1>More customers.<br />Smoother operations.<br /><em>A stronger business.</em></h1>
+          <p>Professional websites, restaurant ordering, online bookings, AI automation and NFC review cards. We help restaurants, salons, barbers, clinics and other local businesses turn enquiries into action—and spend less time on admin. Start with a free on-site business audit.</p>
           <div className="hero-actions">
             <a className="button button-dark" href="#audit">Request your free audit <span aria-hidden="true">↗</span></a>
             <ArrowLink href="#outcomes">See what we improve</ArrowLink>
@@ -95,8 +99,8 @@ export default function Home() {
             <span className="audit-status"><i /> Local</span>
           </div>
           <div className="audit-scope">
-            <article><span>01</span><div><small>Customer demand</small><strong>How local guests find and choose you</strong></div><b>Review</b></article>
-            <article><span>02</span><div><small>Guest journey</small><strong>From first search to order or visit</strong></div><b>Review</b></article>
+            <article><span>01</span><div><small>Customer demand</small><strong>How local customers find and choose you</strong></div><b>Review</b></article>
+            <article><span>02</span><div><small>Customer journey</small><strong>From first search to booking or order</strong></div><b>Review</b></article>
             <article><span>03</span><div><small>Operations</small><strong>Where time, orders or enquiries get lost</strong></div><b>Review</b></article>
           </div>
           <div className="audit-preview-result">
@@ -118,7 +122,7 @@ export default function Home() {
           <Eyebrow>What we improve</Eyebrow>
           <div>
             <h2>Start with the business problem—not a piece of technology.</h2>
-            <p>We look at where your restaurant is today, what is holding it back and which improvements could create the strongest commercial result.</p>
+            <p>We look at where your business is today, what is holding it back and which improvements could make the biggest practical difference.</p>
           </div>
         </div>
         <div className="outcomes-grid">
@@ -136,20 +140,20 @@ export default function Home() {
 
       <section className="restaurant-lens">
         <div className="restaurant-lens-heading">
-          <Eyebrow light>Every restaurant is different</Eyebrow>
+          <Eyebrow light>Every business is different</Eyebrow>
           <h2>Not every business has the same problem.</h2>
           <p>The audit identifies which side needs attention first—and where a joined-up plan can improve both.</p>
         </div>
         <div className="restaurant-lens-grid">
           <article>
-            <span className="lens-label">When tables need more guests</span>
+            <span className="lens-label">When you need more customers</span>
             <h3>Make the business easier to find, trust and choose.</h3>
-            <ul><li>Local visibility</li><li>Website and menus</li><li>Reviews and reputation</li><li>Offers and repeat visits</li></ul>
+            <ul><li>Local visibility</li><li>Website and service pages</li><li>Reviews and reputation</li><li>Offers and repeat business</li></ul>
           </article>
           <article>
             <span className="lens-label">When service is already busy</span>
-            <h3>Make orders and daily operations easier to manage.</h3>
-            <ul><li>Ordering journeys</li><li>Reservation flow</li><li>Team notifications</li><li>Admin automation</li></ul>
+            <h3>Make bookings, orders and daily admin easier to manage.</h3>
+            <ul><li>Online ordering</li><li>Appointment booking</li><li>Team notifications</li><li>Admin automation</li></ul>
           </article>
         </div>
       </section>
@@ -169,6 +173,7 @@ export default function Home() {
               <h3>{solution.title}</h3>
               <p>{solution.text}</p>
               <ul>{solution.items.map((item) => <li key={item}><span aria-hidden="true">↗</span>{item}</li>)}</ul>
+              <ArrowLink href={solution.href}>Explore {solution.title.toLowerCase()}</ArrowLink>
             </article>
           ))}
         </div>
@@ -178,14 +183,14 @@ export default function Home() {
         <div className="expertise-statement">
           <Eyebrow light>Why AI Digital Prime</Eyebrow>
           <h2>Business first.<br /><em>Technology second.</em></h2>
-          <p>Good digital tools matter only when they solve the right problem. That is why every recommendation begins with how your restaurant attracts customers and runs day to day.</p>
+          <p>Good digital tools matter only when they solve the right problem. That is why every recommendation begins with how your business attracts customers and runs day to day.</p>
         </div>
         <div className="expertise-proof">
           <span className="proof-kicker">A practical point of view</span>
           <h3>Hospitality insight, strengthened by smart systems.</h3>
           <p>AI Digital Prime combines hands-on hospitality and management experience with a practical understanding of digital systems. We look beyond marketing alone—at how customers find you, what they experience and how the business runs behind the scenes.</p>
           <ul>
-            <li><span>01</span>Recommendations shaped around your restaurant</li>
+            <li><span>01</span>Recommendations shaped around your business</li>
             <li><span>02</span>Clear priorities and honest commercial thinking</li>
             <li><span>03</span>No generic package and no obligation to continue</li>
           </ul>
@@ -205,12 +210,12 @@ export default function Home() {
       <section className="hospitality-audit" id="audit">
         <div className="hospitality-audit-copy">
           <Eyebrow light>Free on-site business audit</Eyebrow>
-          <h2>See where your restaurant could perform better.</h2>
+          <h2>See where your business could perform better.</h2>
           <p>Leave your name, business name and phone number. We review your business before contacting you, then call to arrange a suitable time for the visit.</p>
           <ul>
             <li><span>✓</span>Customer demand and local visibility</li>
-            <li><span>✓</span>Website, menu and guest journey</li>
-            <li><span>✓</span>Ordering, service and operational flow</li>
+            <li><span>✓</span>Website, service pages and customer journey</li>
+            <li><span>✓</span>Bookings, orders and operational flow</li>
             <li><span>✓</span>Reviews, repeat visits and practical systems</li>
           </ul>
           <div className="audit-area"><small>Currently available in</small><strong>{siteConfig.location}</strong></div>

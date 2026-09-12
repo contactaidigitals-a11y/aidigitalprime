@@ -61,10 +61,10 @@ export async function POST(request: Request) {
   }
 
   const apiKey = process.env.RESEND_API_KEY;
-  const to = process.env.LEAD_TO_EMAIL;
-  const from = process.env.LEAD_FROM_EMAIL || `${siteConfig.brandName} <onboarding@resend.dev>`;
-  if (!apiKey || !to) {
-    return Response.json({ message: "The request form is being connected. Please try again shortly." }, { status: 503 });
+  const to = process.env.LEAD_TO_EMAIL || siteConfig.contactEmail;
+  const from = process.env.LEAD_FROM_EMAIL;
+  if (!apiKey || !from) {
+    return Response.json({ message: "The form is temporarily unavailable. Your request has not been sent. Please use WhatsApp or email below." }, { status: 503 });
   }
 
   const rows = [
@@ -73,6 +73,7 @@ export async function POST(request: Request) {
     ["Contact name", name],
     ["Phone", phone],
     ["Source", sourcePage],
+    ["Submitted (UTC)", new Date().toISOString()],
   ];
   const html = `<div style="font-family:Arial,sans-serif;max-width:680px;color:#101828"><p style="color:#2353b5;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">AI Digital Prime website</p><h1 style="font-size:28px">New free on-site audit request</h1>${rows.map(([label, value]) => `<p style="border-bottom:1px solid #dbe2ec;padding:10px 0"><strong>${escapeHtml(label)}:</strong><br>${escapeHtml(value)}</p>`).join("")}</div>`;
   const text = rows.map(([label, value]) => `${label}: ${value}`).join("\n");
@@ -85,6 +86,7 @@ export async function POST(request: Request) {
     body: JSON.stringify({
       from,
       to: [to],
+      reply_to: siteConfig.contactEmail,
       subject: `New free on-site audit request — ${businessName}`,
       html,
       text,

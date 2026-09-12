@@ -4,8 +4,8 @@ import { siteConfig } from "../config";
 import { AuditForm } from "./AuditForm";
 
 export const metadata: Metadata = {
-  title: "Free On-Site Hospitality Audit",
-  description: "Request a free on-site review of customer demand, the guest journey and day-to-day operations for your hospitality business.",
+  title: "Free Business Audit in Harlow",
+  description: "Request a free on-site review of your website, customer journey, bookings and day-to-day systems. For local businesses in Harlow and nearby areas.",
 };
 
 export default function FreeAuditPage() {
@@ -16,7 +16,7 @@ export default function FreeAuditPage() {
         <section className="audit-page-hero">
           <Eyebrow light>Free on-site business audit</Eyebrow>
           <h1>Understand the business.<br /><em>Improve what matters.</em></h1>
-          <p>We visit your restaurant, learn how it works and identify practical opportunities to attract more customers, improve operations—or both.</p>
+          <p>We visit your business, learn how it works and identify practical opportunities to attract more customers, improve bookings and orders, or save time on everyday admin.</p>
         </section>
       </div>
 
@@ -24,7 +24,7 @@ export default function FreeAuditPage() {
         <aside className="audit-sidebar">
           <p className="sidebar-label">What we review</p>
           <ol>
-            {["Customer journey and local demand", "Ordering and service flow", "Reviews and repeat visits", "Website and online presence", "Practical operational improvements"].map((item, index) => <li key={item}><span>0{index + 1}</span>{item}</li>)}
+            {["Customer journey and local demand", "Booking, ordering and enquiry flow", "Reviews and repeat business", "Website and online presence", "Practical operational improvements"].map((item, index) => <li key={item}><span>0{index + 1}</span>{item}</li>)}
           </ol>
           <div className="audit-eligibility">
             <span>Current visit area</span>
