@@ -1,27 +1,29 @@
 import { serviceLinks, siteConfig } from "../config";
+import { MobileNav } from "./MobileNav";
 
 export function Brand() {
   return (
-    <a className="brand" href="/" aria-label={`${siteConfig.brandName} home`}>
-      <span className="brand-mark" aria-hidden="true">
-        <i />
-        <i />
+    <a className="brand" href="/" aria-label={siteConfig.brandName + " home"}>
+      <span className="brand-wordmark" aria-hidden="true">
+        <b>AI</b>
+        <b>DIGITAL</b>
+        <b>PRIME</b>
       </span>
-      <span className="brand-name">{siteConfig.brandName}</span>
+      <span className="brand-tagline">{siteConfig.tagline}</span>
     </a>
   );
 }
 
 const primaryLinks = [
-  { label: "Services", href: "/services" },
-  { label: "Industries", href: "/#industries" },
-  { label: "Process", href: "/#process" },
-  { label: "Why us", href: "/#about" },
+  { label: "What we improve", href: "/#outcomes" },
+  { label: "Solutions", href: "/#solutions" },
+  { label: "Why us", href: "/#expertise" },
+  { label: "How it works", href: "/#process" },
 ];
 
 export function SiteHeader({ dark = false }: { dark?: boolean }) {
   return (
-    <header className={`site-header${dark ? " header-dark" : ""}`}>
+    <header className={"site-header" + (dark ? " header-dark" : "")}>
       <Brand />
       <nav className="main-nav" aria-label="Main navigation">
         {primaryLinks.map((link) => (
@@ -29,17 +31,9 @@ export function SiteHeader({ dark = false }: { dark?: boolean }) {
         ))}
       </nav>
       <a className="header-cta" href={siteConfig.auditUrl}>
-        Free digital audit <span aria-hidden="true">↗</span>
+        Free on-site audit <span aria-hidden="true">↗</span>
       </a>
-      <details className="mobile-menu">
-        <summary aria-label="Open navigation"><span /><span /></summary>
-        <nav aria-label="Mobile navigation">
-          {primaryLinks.map((link) => (
-            <a href={link.href} key={link.href}>{link.label}<span>↗</span></a>
-          ))}
-          <a className="mobile-audit-link" href={siteConfig.auditUrl}>Free digital audit</a>
-        </nav>
-      </details>
+      <MobileNav links={primaryLinks} auditUrl={siteConfig.auditUrl} />
     </header>
   );
 }
@@ -49,23 +43,22 @@ export function SiteFooter() {
     <footer className="site-footer">
       <div className="footer-lead">
         <Brand />
-        <p>Thoughtful digital systems for businesses where every enquiry matters.</p>
+        <p>Practical business improvements for independent restaurants, cafés, pubs and takeaways.</p>
       </div>
       <div className="footer-column">
-        <span>Services</span>
+        <span>What we improve</span>
         {serviceLinks.map((link) => <a href={link.href} key={link.href}>{link.label}</a>)}
       </div>
       <div className="footer-column">
         <span>Company</span>
-        <a href="/#industries">Industries</a>
-        <a href="/#process">Process</a>
-        <a href="/#about">Why us</a>
-        <a href="/free-audit">Contact</a>
+        <a href="/#expertise">Why AI Digital Prime</a>
+        <a href="/#process">How it works</a>
+        <a href={siteConfig.auditPageUrl}>Free audit</a>
       </div>
-      <div className="footer-column">
-        <span>Start a conversation</span>
-        <a href={`mailto:${siteConfig.contactEmail}`}>{siteConfig.contactEmail}</a>
-        <a className="footer-call" href={siteConfig.callUrl}>Book a call <span>↗</span></a>
+      <div className="footer-column footer-conversion">
+        <span>Start with clarity</span>
+        <p>Leave your details. We review your business, then call to arrange a suitable visit.</p>
+        <a className="footer-call" href={siteConfig.auditUrl}>Request your free audit <span>↗</span></a>
       </div>
       <div className="footer-bottom">
         <p>© {new Date().getFullYear()} {siteConfig.brandName}. All rights reserved.</p>
@@ -77,9 +70,9 @@ export function SiteFooter() {
 }
 
 export function Eyebrow({ children, light = false }: { children: React.ReactNode; light?: boolean }) {
-  return <p className={`eyebrow${light ? " eyebrow-light" : ""}`}><span />{children}</p>;
+  return <p className={"eyebrow" + (light ? " eyebrow-light" : "")}><span />{children}</p>;
 }
 
 export function ArrowLink({ href, children, light = false }: { href: string; children: React.ReactNode; light?: boolean }) {
-  return <a className={`text-link${light ? " text-link-light" : ""}`} href={href}>{children}<span aria-hidden="true">→</span></a>;
+  return <a className={"text-link" + (light ? " text-link-light" : "")} href={href}>{children}<span aria-hidden="true">→</span></a>;
 }

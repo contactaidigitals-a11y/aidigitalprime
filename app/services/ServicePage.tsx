@@ -11,7 +11,7 @@ export function ServicePage({ service }: { service: ServiceDetail }) {
           <div className="service-breadcrumb"><a href="/services">Services</a><span>/</span><b>{service.kicker}</b></div>
           <div className="service-hero-grid">
             <div><Eyebrow light>{service.index} · {service.kicker}</Eyebrow><h1>{service.title}</h1></div>
-            <div className="service-hero-copy"><p>{service.intro}</p><a className="button button-acid" href={`${siteConfig.auditUrl}?service=${service.slug}`}>{service.cta}<span>↗</span></a><small>No obligation. Start with a practical conversation.</small></div>
+            <div className="service-hero-copy"><p>{service.intro}</p><a className="button button-acid" href={siteConfig.auditUrl}>Request your free audit<span>↗</span></a><small>No obligation. We review your business before calling.</small></div>
           </div>
           <div className="service-promise"><span>THE OUTCOME</span><p>{service.promise}</p><i>{service.index}</i></div>
         </section>
@@ -38,7 +38,7 @@ export function ServicePage({ service }: { service: ServiceDetail }) {
       </section>
 
       <section className="service-final-cta">
-        <Eyebrow light>Your next move</Eyebrow><h2>Make the journey easier to choose.</h2><p>Start with a free audit or a focused discovery call. We’ll identify the most valuable next step.</p><div><a className="button button-acid" href={`${siteConfig.auditUrl}?service=${service.slug}`}>{service.cta}<span>↗</span></a><ArrowLink light href={siteConfig.callUrl}>Book a discovery call</ArrowLink></div>
+        <Eyebrow light>Your next move</Eyebrow><h2>Start with the business opportunity.</h2><p>Request a free on-site audit. We’ll understand how your business works and identify the most valuable next step.</p><div><a className="button button-acid" href={siteConfig.auditUrl}>Request your free audit<span>↗</span></a><ArrowLink light href="/#solutions">Explore our solutions</ArrowLink></div>
       </section>
       <SiteFooter />
     </main>

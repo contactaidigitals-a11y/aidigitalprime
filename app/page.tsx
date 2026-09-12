@@ -1,156 +1,226 @@
 import { ArrowLink, Eyebrow, SiteFooter, SiteHeader } from "./components/SiteChrome";
-import { serviceLinks, siteConfig } from "./config";
+import { siteConfig } from "./config";
+import { AuditForm } from "./free-audit/AuditForm";
 
-const serviceCards = [
+const outcomes = [
+  {
+    id: "customers",
+    number: "01",
+    kicker: "Demand",
+    title: "Get more customers",
+    text: "Help more local guests discover your business, trust what they see and choose you.",
+    items: ["A stronger website and menu journey", "Google visibility and local offers", "NFC and QR tools that make reviews easier"],
+    result: "More visibility. More trust. More reasons to visit.",
+  },
+  {
+    id: "operations",
+    number: "02",
+    kicker: "Efficiency",
+    title: "Improve operations",
+    text: "Remove avoidable steps from ordering, enquiries and everyday admin so your team can focus on service.",
+    items: ["Online, collection and table-order flows", "Clear confirmations and team alerts", "Practical automations around your workflow"],
+    result: "Less friction. Fewer missed requests. Smoother service.",
+  },
+  {
+    id: "audit-overview",
+    number: "03",
+    kicker: "Clarity",
+    title: "Free business audit",
+    text: "We visit your restaurant, understand how it runs and identify the improvements worth prioritising.",
+    items: ["Customer demand and guest journey review", "Ordering, service and system review", "A written report with prioritised actions"],
+    result: "Relevant recommendations, without the generic sales pitch.",
+  },
+];
+
+const solutions = [
   {
     number: "01",
-    title: "Restaurant ordering & automation",
-    href: serviceLinks[0].href,
-    text: "Turn website visits and messages into confirmed orders, reservations and properly routed enquiries.",
-    outcome: "Hungry → ordered",
-    items: ["Collection or delivery order capture", "Automatic confirmations and team alerts", "Reservation, catering and event enquiries"],
+    title: "Restaurant ordering systems",
+    text: "A simpler way to receive and manage the orders that matter to your business.",
+    items: ["Collection or delivery order capture", "Table ordering and QR menu journeys", "Automatic confirmations and team notifications"],
+    label: "Orders",
   },
   {
     number: "02",
-    title: "Booking systems",
-    href: serviceLinks[1].href,
-    text: "24/7 online booking for barbers, salons and clinics, built around your services, team and availability.",
-    outcome: "Interest → booked",
-    items: ["Calendar and staff availability setup", "Confirmations and reminders", "Cancellation, rebooking and follow-up flows"],
+    title: "Websites & local visibility",
+    text: "A professional digital front door that makes your offer clear and turns local interest into action.",
+    items: ["Fast, mobile-first restaurant websites", "Menus, offers and conversion-focused pages", "Google presence and local-search foundations"],
+    label: "Growth",
   },
   {
     number: "03",
-    title: "Web design & development",
-    href: serviceLinks[2].href,
-    text: "Fast, polished websites that explain your offer and make it easy to order, book or enquire.",
-    outcome: "Trust → action",
-    items: ["Mobile-first design", "Menu, service and local-search pages", "Booking, ordering and lead integrations"],
+    title: "NFC review systems",
+    text: "Configured cards and stands that make it easy for happy guests to leave a Google review.",
+    items: ["NFC card or table-stand programming", "Direct Google review link with QR backup", "Placement and team rollout guidance"],
+    label: "Reputation",
   },
   {
     number: "04",
-    title: "NFC review cards",
-    href: serviceLinks[3].href,
-    text: "Turn a good in-person experience into a simple tap-to-review journey for your customers.",
-    outcome: "Visit → review",
-    items: ["NFC card or tag programming", "Google review link with QR backup", "Placement and staff rollout guidance"],
-  },
-  {
-    number: "05",
-    title: "AI & admin automation",
-    href: serviceLinks[4].href,
-    text: "Reduce repetitive admin with carefully scoped automations that keep your team in control.",
-    outcome: "Admin → momentum",
-    items: ["FAQ and enquiry assistance", "Lead summaries and routing", "Reminder and follow-up workflows"],
-  },
-  {
-    number: "06",
-    title: "Local digital growth",
-    href: serviceLinks[5].href,
-    text: "Help nearby customers find you and see which channels create real orders, bookings and enquiries.",
-    outcome: "Seen → chosen",
-    items: ["Google Business Profile optimisation", "Local pages and search foundations", "Analytics and conversion tracking"],
+    title: "Reservations & practical automation",
+    text: "Joined-up digital tools that reduce repetitive work and keep customer requests moving.",
+    items: ["Reservation and event-enquiry journeys", "Reminders, routing and follow-up flows", "Simple admin tools built around your team"],
+    label: "Operations",
   },
 ];
 
-const frictionPoints = [
-  { number: "01", title: "An outdated website", text: "Your online presence does not reflect the quality of the real experience." },
-  { number: "02", title: "Missed orders and enquiries", text: "Orders and leads arrive through different channels without a clear route into the business." },
-  { number: "03", title: "Too much manual admin", text: "Your team repeats tasks that could be handled more efficiently." },
-  { number: "04", title: "A difficult booking journey", text: "Customers have to work too hard to reserve, enquire or make an appointment." },
-];
-
-const industries = [
-  { className: "restaurant", number: "01", title: "Restaurants & takeaways", headline: "From local search to confirmed order.", text: "Capture collection or delivery orders, reservations and event enquiries without relying on scattered messages.", tags: ["Online orders", "Reservations", "NFC reviews"] },
-  { className: "salon", number: "02", title: "Salons & barbers", headline: "From local interest to repeat bookings.", text: "Let clients book around the clock, receive reminders, rebook easily and leave a review with one tap.", tags: ["24/7 booking", "Reminders", "NFC reviews"] },
-  { className: "clinic", number: "03", title: "Clinics & practices", headline: "A clearer digital front door.", text: "Give prospective patients trusted information, privacy-conscious forms and a simpler appointment journey.", tags: ["Appointments", "Reminders", "Private enquiries"] },
-];
-
-const principles = [
-  "Built around how your customers actually decide",
-  "Designed to work with existing tools where sensible",
-  "Clear scope, deliverables and handover",
-  "Performance, accessibility and privacy considered",
-  "Honest advice—even when a simpler solution is enough",
+const process = [
+  { number: "01", title: "Request your visit", text: "Leave your name, business name and phone number. We review your restaurant before contacting you." },
+  { number: "02", title: "We visit your business", text: "We discuss your goals and look at customer demand, the guest journey, operations and current systems." },
+  { number: "03", title: "Receive a practical plan", text: "We prepare a written report and explain the strongest opportunities in person. You decide whether any recommendation goes further." },
 ];
 
 export default function Home() {
   return (
-    <main>
+    <main className="hospitality-home">
       <SiteHeader />
-      <section className="hero">
-        <div className="hero-glow" aria-hidden="true" />
-        <div className="hero-copy">
-          <Eyebrow>AI & digital systems for UK service businesses</Eyebrow>
-          <h1>Turn local attention into <em>orders & bookings.</em></h1>
-          <p className="hero-intro">We build websites, online ordering and booking systems, practical automations and NFC review tools for restaurants, takeaways, barbers, salons and clinics across the UK.</p>
+
+      <section className="hospitality-hero">
+        <div className="hospitality-hero-copy">
+          <Eyebrow>Independent hospitality · Harlow & Essex</Eyebrow>
+          <h1>More customers.<br />Smoother operations.<br /><em>A stronger restaurant.</em></h1>
+          <p>AI Digital Prime helps independent restaurants uncover opportunities, solve practical problems and improve performance. It starts with a free on-site business audit, shaped around your goals and the way your business works.</p>
           <div className="hero-actions">
-            <a className="button button-dark" href={siteConfig.auditUrl}>Get your free audit <span aria-hidden="true">↗</span></a>
-            <ArrowLink href={siteConfig.callUrl}>Book a discovery call</ArrowLink>
+            <a className="button button-dark" href="#audit">Request your free audit <span aria-hidden="true">↗</span></a>
+            <ArrowLink href="#outcomes">See what we improve</ArrowLink>
           </div>
-          <p className="hero-note">No obligation. Clear, practical recommendations.</p>
+          <div className="hospitality-hero-note">
+            <span aria-hidden="true">✓</span>
+            <p><strong>Free and without obligation.</strong> We review your business before calling to arrange the visit.</p>
+          </div>
         </div>
-        <div className="system-visual" aria-label="A sample automated enquiry journey">
-          <div className="visual-topline"><span>Customer journey</span><span className="live-indicator"><i /> LIVE</span></div>
-          <div className="signal-card signal-primary"><span className="signal-icon">01</span><div><small>New customer</small><strong>Order or booking request</strong></div><span className="signal-time">Now</span></div>
-          <div className="journey-line" aria-hidden="true"><span /><i /></div>
-          <div className="signal-card"><span className="signal-icon muted">AI</span><div><small>Connected system</small><strong>Confirmed & routed</strong></div><span className="status-pill">Ready</span></div>
-          <div className="journey-line short" aria-hidden="true"><span /><i /></div>
-          <div className="signal-card signal-success"><span className="signal-icon tick">✓</span><div><small>Next step</small><strong>Team ready to deliver</strong></div><span className="signal-time">Done</span></div>
-          <div className="visual-caption"><span>LESS FRICTION</span><span className="caption-line" /><span>MORE ACTION</span></div>
+
+        <aside className="audit-preview" aria-label="What the free business audit covers">
+          <div className="audit-preview-head">
+            <div><span>Free on-site review</span><strong>Business opportunity audit</strong></div>
+            <span className="audit-status"><i /> Local</span>
+          </div>
+          <div className="audit-scope">
+            <article><span>01</span><div><small>Customer demand</small><strong>How local guests find and choose you</strong></div><b>Review</b></article>
+            <article><span>02</span><div><small>Guest journey</small><strong>From first search to order or visit</strong></div><b>Review</b></article>
+            <article><span>03</span><div><small>Operations</small><strong>Where time, orders or enquiries get lost</strong></div><b>Review</b></article>
+          </div>
+          <div className="audit-preview-result">
+            <span>What you receive</span>
+            <p>A prioritised, practical improvement plan.</p>
+          </div>
+          <div className="audit-preview-foot"><span>ON-SITE</span><i /><span>PRACTICAL</span><i /><span>NO OBLIGATION</span></div>
+        </aside>
+      </section>
+
+      <section className="trust-strip" aria-label="Our approach">
+        <div><span>01</span><p><strong>Hospitality insight</strong>Hands-on understanding of service businesses</p></div>
+        <div><span>02</span><p><strong>Management thinking</strong>Recommendations connected to real priorities</p></div>
+        <div><span>03</span><p><strong>Practical systems</strong>Technology chosen only where it helps</p></div>
+      </section>
+
+      <section className="outcomes-section" id="outcomes">
+        <div className="section-introduction">
+          <Eyebrow>What we improve</Eyebrow>
+          <div>
+            <h2>Start with the business problem—not a piece of technology.</h2>
+            <p>We look at where your restaurant is today, what is holding it back and which improvements could create the strongest commercial result.</p>
+          </div>
+        </div>
+        <div className="outcomes-grid">
+          {outcomes.map((outcome) => (
+            <article className="outcome-card" id={outcome.id} key={outcome.number}>
+              <div className="outcome-card-top"><span>{outcome.number}</span><small>{outcome.kicker}</small></div>
+              <h3>{outcome.title}</h3>
+              <p>{outcome.text}</p>
+              <ul>{outcome.items.map((item) => <li key={item}>{item}</li>)}</ul>
+              <strong className="outcome-result">{outcome.result}</strong>
+            </article>
+          ))}
         </div>
       </section>
 
-      <section className="proof-strip" aria-label="What we prioritise">
-        {["Online orders", "24/7 bookings", "NFC review tools", "Practical automation"].map((item) => <div key={item}><span aria-hidden="true">✦</span>{item}</div>)}
-      </section>
-
-      <section className="friction-section">
-        <div className="friction-intro">
-          <Eyebrow light>The cost of a disconnected journey</Eyebrow>
-          <h2>Digital friction quietly costs you business.</h2>
-          <p>Customers expect to understand, trust and act within minutes. Every unnecessary step gives them a reason to look elsewhere.</p>
+      <section className="restaurant-lens">
+        <div className="restaurant-lens-heading">
+          <Eyebrow light>Every restaurant is different</Eyebrow>
+          <h2>Not every business has the same problem.</h2>
+          <p>The audit identifies which side needs attention first—and where a joined-up plan can improve both.</p>
         </div>
-        <div className="friction-list">
-          {frictionPoints.map((item) => <article key={item.number}><span>{item.number}</span><div><h3>{item.title}</h3><p>{item.text}</p></div></article>)}
-        </div>
-      </section>
-
-      <section className="services-section" id="services">
-        <div className="section-heading">
-          <Eyebrow>What we build</Eyebrow>
-          <div><h2>Practical systems that solve real business problems.</h2><p className="section-summary">Start with one priority or connect the services around the way your business already works.</p></div>
-        </div>
-        <div className="service-grid">
-          {serviceCards.map((service) => <a className="service-card" href={service.href} key={service.number}><span className="service-number">{service.number}</span><span className="service-outcome">{service.outcome}</span><div><h3>{service.title}</h3><p>{service.text}</p><ul className="service-features">{service.items.map((item) => <li key={item}>{item}</li>)}</ul></div><span className="card-arrow" aria-hidden="true">↗</span></a>)}
+        <div className="restaurant-lens-grid">
+          <article>
+            <span className="lens-label">When tables need more guests</span>
+            <h3>Make the business easier to find, trust and choose.</h3>
+            <ul><li>Local visibility</li><li>Website and menus</li><li>Reviews and reputation</li><li>Offers and repeat visits</li></ul>
+          </article>
+          <article>
+            <span className="lens-label">When service is already busy</span>
+            <h3>Make orders and daily operations easier to manage.</h3>
+            <ul><li>Ordering journeys</li><li>Reservation flow</li><li>Team notifications</li><li>Admin automation</li></ul>
+          </article>
         </div>
       </section>
 
-      <section className="industries-section" id="industries">
-        <div className="industries-heading"><Eyebrow>Sector focus</Eyebrow><h2>Built for businesses where every enquiry matters.</h2></div>
-        <div className="industry-grid">
-          {industries.map((industry) => <article className={`industry-card ${industry.className}`} key={industry.number}><div className="industry-art" aria-hidden="true"><span /><i /><b>{industry.number}</b></div><p className="industry-title">{industry.title}</p><h3>{industry.headline}</h3><p className="industry-copy">{industry.text}</p><div className="tag-row">{industry.tags.map((tag) => <span key={tag}>{tag}</span>)}</div><ArrowLink href={`/free-audit?sector=${industry.className}`}>Explore the opportunity</ArrowLink></article>)}
+      <section className="solutions-section" id="solutions">
+        <div className="section-introduction">
+          <Eyebrow>What we can implement</Eyebrow>
+          <div>
+            <h2>Practical solutions, selected after we understand the business.</h2>
+            <p>The audit is the starting point. If there is a clear opportunity, these are the kinds of systems we can design, configure and put into use.</p>
+          </div>
+        </div>
+        <div className="solutions-grid">
+          {solutions.map((solution) => (
+            <article className="solution-card" key={solution.number}>
+              <div className="solution-card-head"><span>{solution.number}</span><small>{solution.label}</small></div>
+              <h3>{solution.title}</h3>
+              <p>{solution.text}</p>
+              <ul>{solution.items.map((item) => <li key={item}><span aria-hidden="true">↗</span>{item}</li>)}</ul>
+            </article>
+          ))}
         </div>
       </section>
 
-      <section className="principles-section" id="about">
-        <div className="principles-panel"><Eyebrow light>Why {siteConfig.brandName}</Eyebrow><h2>Premium execution. <em>Practical thinking.</em></h2><p>Technology should make the customer experience clearer and the work behind it lighter. That is the standard we build around.</p><a className="button button-acid" href={siteConfig.auditUrl}>See what we would improve <span>↗</span></a></div>
-        <ol className="principles-list">{principles.map((principle, index) => <li key={principle}><span>0{index + 1}</span><p>{principle}</p><i aria-hidden="true">✓</i></li>)}</ol>
-      </section>
-
-      <section className="process-section" id="process">
-        <div className="section-heading process-heading"><Eyebrow>How we work</Eyebrow><div><h2>A clear route from friction to progress.</h2><p className="section-summary">A focused process, designed to keep decisions visible and momentum high.</p></div></div>
-        <div className="process-grid">
-          <article><span>01 / DISCOVER</span><h3>Audit & prioritise</h3><p>We review the customer journey, current systems and the points where useful action is getting lost.</p></article>
-          <article><span>02 / CREATE</span><h3>Design & build</h3><p>We shape the solution around your brand, workflow and most valuable commercial priorities.</p></article>
-          <article><span>03 / ADVANCE</span><h3>Launch & improve</h3><p>We test the experience, connect the essentials and identify the next sensible improvements.</p></article>
+      <section className="expertise-section" id="expertise">
+        <div className="expertise-statement">
+          <Eyebrow light>Why AI Digital Prime</Eyebrow>
+          <h2>Business first.<br /><em>Technology second.</em></h2>
+          <p>Good digital tools matter only when they solve the right problem. That is why every recommendation begins with how your restaurant attracts customers and runs day to day.</p>
+        </div>
+        <div className="expertise-proof">
+          <span className="proof-kicker">A practical point of view</span>
+          <h3>Hospitality insight, strengthened by smart systems.</h3>
+          <p>AI Digital Prime combines hands-on hospitality and management experience with a practical understanding of digital systems. We look beyond marketing alone—at how customers find you, what they experience and how the business runs behind the scenes.</p>
+          <ul>
+            <li><span>01</span>Recommendations shaped around your restaurant</li>
+            <li><span>02</span>Clear priorities and honest commercial thinking</li>
+            <li><span>03</span>No generic package and no obligation to continue</li>
+          </ul>
         </div>
       </section>
 
-      <section className="audit-band">
-        <div className="audit-orbit" aria-hidden="true"><span>FREE DIGITAL AUDIT • PRACTICAL NEXT STEPS • </span></div>
-        <div className="audit-copy"><Eyebrow>Not sure what to fix first?</Eyebrow><h2>Start with clarity.</h2><p>We’ll review the journey from first visit to order, booking or enquiry and highlight the most valuable opportunities.</p><div className="audit-actions"><a className="button button-dark" href={siteConfig.auditUrl}>Request my free audit <span>↗</span></a><ArrowLink href={siteConfig.callUrl}>Book a call</ArrowLink></div></div>
-        <ul className="audit-checks">{["Website & mobile experience", "Ordering or booking friction", "Follow-up and reminder gaps", "Google review journey", "Practical automation opportunities"].map((item) => <li key={item}><span>✓</span>{item}</li>)}</ul>
+      <section className="hospitality-process" id="process">
+        <div className="section-introduction">
+          <Eyebrow>How it works</Eyebrow>
+          <div><h2>A useful first conversation starts before we call.</h2><p>We do a little homework first, then make the visit focused, relevant and worth your time.</p></div>
+        </div>
+        <div className="hospitality-process-grid">
+          {process.map((step) => <article data-step={step.number} key={step.number}><span>{step.number}</span><h3>{step.title}</h3><p>{step.text}</p></article>)}
+        </div>
       </section>
+
+      <section className="hospitality-audit" id="audit">
+        <div className="hospitality-audit-copy">
+          <Eyebrow light>Free on-site business audit</Eyebrow>
+          <h2>See where your restaurant could perform better.</h2>
+          <p>Leave your name, business name and phone number. We review your business before contacting you, then call to arrange a suitable time for the visit.</p>
+          <ul>
+            <li><span>✓</span>Customer demand and local visibility</li>
+            <li><span>✓</span>Website, menu and guest journey</li>
+            <li><span>✓</span>Ordering, service and operational flow</li>
+            <li><span>✓</span>Reviews, repeat visits and practical systems</li>
+          </ul>
+          <div className="audit-area"><small>Currently available in</small><strong>{siteConfig.location}</strong></div>
+        </div>
+        <div className="hospitality-form-card">
+          <div className="hospitality-form-head"><span>YOUR DETAILS</span><p>3 fields · about 30 seconds</p></div>
+          <AuditForm source="Homepage" />
+        </div>
+      </section>
+
       <SiteFooter />
     </main>
   );

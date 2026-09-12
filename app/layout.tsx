@@ -7,22 +7,23 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: `${siteConfig.brandName} | AI & Digital Systems for UK Businesses`,
+    default: `${siteConfig.brandName} | Hospitality Business Improvement`,
     template: `%s | ${siteConfig.brandName}`,
   },
   description:
-    "Websites, restaurant ordering, booking systems, AI automation and NFC review cards for UK restaurants, takeaways, salons, barbers and clinics.",
+    "Practical websites, ordering, automation, reviews and operational improvements for independent restaurants, cafés, pubs and takeaways. Request a free on-site audit.",
   openGraph: {
     type: "website",
+    locale: "en_GB",
     siteName: siteConfig.brandName,
-    title: `${siteConfig.brandName} | Turn more enquiries into bookings`,
-    description: "Premium websites, ordering and booking systems, practical automation and NFC review tools for UK service businesses.",
-    images: [{ url: "/og.png", width: 1200, height: 630, alt: `${siteConfig.brandName} — Turn more enquiries into bookings.` }],
+    title: `${siteConfig.brandName} | Helping Hospitality Businesses Grow Smarter`,
+    description: "Business improvement for independent hospitality, starting with a free on-site audit in Harlow, Essex and nearby areas.",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: siteConfig.brandName }],
   },
   twitter: {
     card: "summary_large_image",
-    title: `${siteConfig.brandName} | Turn more enquiries into bookings`,
-    description: "Premium websites, ordering and booking systems, practical automation and NFC review tools for UK service businesses.",
+    title: `${siteConfig.brandName} | Hospitality Business Improvement`,
+    description: "Practical improvements for independent restaurants, cafés, pubs and takeaways.",
     images: ["/og.png"],
   },
 };
