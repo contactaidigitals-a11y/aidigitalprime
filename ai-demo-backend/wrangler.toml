@@ -1,0 +1,25 @@
+name = "ai-digital-prime-site-api"
+main = "index.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+# Change to your real, verified website origin(s).
+ALLOWED_ORIGINS = "https://aidigitalprime.co.uk,https://www.aidigitalprime.co.uk"
+OPENAI_MODEL = "gpt-4o-mini"
+# Dedicated, authenticated inbound demo only: do NOT use the outbound sales Alex agent.
+ELEVENLABS_DEMO_AGENT_ID = "agent_6801m7510r1pf7cv8q9dwtgrq9wn"
+
+[[durable_objects.bindings]]
+name = "WEBSITE_QUOTA"
+class_name = "WebsiteQuota"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["WebsiteQuota"]
+
+# Required secrets (set via CLI; never commit to GitHub):
+# npx wrangler secret put OPENAI_API_KEY
+# npx wrangler secret put ELEVENLABS_API_KEY
+# npx wrangler secret put QUOTA_HASH_SALT
+# npx wrangler secret put RESEND_API_KEY
+# Set CONTACT_FROM and CONTACT_RECIPIENT as environment variables after verifying a sending domain.
