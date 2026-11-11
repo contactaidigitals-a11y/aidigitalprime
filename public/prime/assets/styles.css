@@ -30,3 +30,24 @@
 .service-pricing strong{font-size:31px;letter-spacing:-.055em;font-weight:700;color:#287a64}
 .featured .service-pricing span{color:#b6d7cb}
 .featured .service-pricing strong{color:#9ce8c8}
+
+/* AI Voice Receptionist Plans */
+.voice-plans-section{background:#f3f8f5;padding:78px 0 84px}
+.voice-plan-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.voice-plan-card{background:#fff;border:1px solid #dbe8df;border-radius:17px;padding:28px;display:flex;flex-direction:column;gap:19px;min-width:0;box-shadow:0 10px 32px #132d2010}
+.voice-plan-popular{border:2px solid #2d9476;box-shadow:0 14px 42px #176f4830}
+.voice-plan-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.voice-plan-tier{font-size:11px;letter-spacing:.15em;color:#246e58;font-weight:850}
+.voice-plan-fit{font-size:11px;color:#6e8078}
+.voice-plan-price{display:flex;align-items:baseline;gap:7px;color:#0b2429}
+.voice-plan-price strong{font:700 48px/1 var(--heading);letter-spacing:-.065em}
+.voice-plan-price span{font-size:13px;color:#657672}
+.voice-plan-minutes{font-size:14px;color:#314d40;line-height:1.5;min-height:44px}
+.voice-plan-minutes strong{font:700 25px/1 var(--heading);color:#176c54}
+.voice-plan-overage,.voice-plan-setup{padding-top:15px;border-top:1px solid #e9efeb;font-size:13px;color:#4d6259;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px}
+.voice-plan-overage strong,.voice-plan-setup strong{color:#133f34;font-size:15px}
+.voice-plan-cta{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:12px;background:#0d3335;border-radius:10px;color:#fff;padding:14px 16px;font-size:13px;font-weight:750;text-decoration:none;transition:background .18s}
+.voice-plan-cta:hover{background:#18564c;color:#fff}
+.voice-plans-note{font-size:12px;line-height:1.65;color:#60746a;margin:24px 0 0;max-width:950px}
+@media(max-width:900px){.voice-plan-grid{grid-template-columns:1fr 1fr}.voice-plan-card:last-child{grid-column:1 / -1}}
+@media(max-width:650px){.voice-plans-section{padding:54px 0}.voice-plan-grid{grid-template-columns:1fr}.voice-plan-card:last-child{grid-column:auto}.voice-plan-price strong{font-size:42px}}
