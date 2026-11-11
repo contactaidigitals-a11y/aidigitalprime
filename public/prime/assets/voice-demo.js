@@ -70,7 +70,7 @@
       document.body.append(widget);
       callState.textContent='Waiting for microphone permission…';
       // The widget starts the session after the signed URL and business variables are attached.
-      await widget.startConversation();
+      if(typeof widget.startConversation!=='function')throw new Error('The voice widget is unavailable. Please refresh and try again.');\n      await widget.startConversation();
       // Fail-safe if the expected event is not emitted by a future widget version.
       if(pending && widget)startClock();
     }catch(error){stopCall(error instanceof Error?error.message:'Unable to start the demo.');status.classList.add('is-error');}

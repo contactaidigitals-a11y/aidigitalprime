@@ -7,11 +7,11 @@ window.AI_DIGITAL_PRIME_CONFIG = {
      its prompt, dynamic variables, security settings and permitted domains. */
   /* The website uses authenticated signed sessions; never expose a reusable public voice agent. */
   publicDemoAgentId: '',
-  /* Set to HTTPS Cloudflare Worker voice session route after deployment. */
-  voiceApiUrl: '',
-  /* Optional callback delivery API on the same secure Worker, /callback. */
+  /* Same-origin Railway API: returns a short-lived signed ElevenLabs session URL. */
+  voiceApiUrl: '/api/voice-session',
+  /* Same-origin Railway API for enquiries delivered via Resend. */
   callbackApiUrl: '/api/enquiry',
   /* Optional AI backend endpoint (e.g. a deployed Cloudflare Worker URL).
      Keep empty for the honest, functional guided FAQ preview. Never use an API key here. */
-  chatApiUrl: '',
+  chatApiUrl: '/api/prime-chat',
 };
