@@ -21,8 +21,10 @@ export async function POST(request: Request) {
       return apiJson(400, { error: "Please check " + field.replaceAll("_", " ") + "." });
     }
   }
-  const apiKey = process.env.ELEVENLABS_API_KEY;
-  const agentId = process.env.ELEVENLABS_DEMO_AGENT_ID;
+  // Normalise accidental whitespace and wrapping quotes from environment-variable paste.
+  // Never send, expose or log API key content.
+  const apiKey = (process.env.ELEVENLABS_API_KEY || "").trim().replace(/^['"]|['"]$/g, "").trim();
+  const agentId = (process.env.ELEVENLABS_DEMO_AGENT_ID || "").trim();
   if (!apiKey || !agentId || !/^agent_[a-z0-9]+$/i.test(agentId)) {
     return apiJson(503, { error: "The voice demonstration is not configured yet." });
   }
@@ -37,8 +39,31 @@ export async function POST(request: Request) {
     });
     if (!response.ok) {
       reservation.undo();
-      console.error("Prime voice ElevenLabs error status:", response.status);
-      return apiJson(503, { error: "The AI receptionist is temporarily unavailable." });
+      // Only inspect the machine-readable error code, not the response message or credentials.
+      let errorCode = "unknown";
+      try {
+        const raw: unknown = await response.json();
+        if (raw && typeof raw === "object") {
+          const detail = (raw as Record<string, unknown>).detail;
+          const status = detail && typeof detail === "object"
+            ? (detail as Record<string, unknown>).status
+            : typeof detail === "string" ? detail : null;
+          if (typeof status === "string" && /^[a-z0-9_-]{1,60}$/i.test(status)) {
+            errorCode = status;
+          }
+        }
+      } catch { /* Error bodies may not be JSON. */ }
+      console.error("Prime voice ElevenLabs rejection", {
+        httpStatus: response.status,
+        errorCode,
+        keyPresent: apiKey.length > 0,
+        keyLengthPlausible: apiKey.length >= 20,
+        hadWrappingWhitespace: (process.env.ELEVENLABS_API_KEY || "") !== (process.env.ELEVENLABS_API_KEY || "").trim()
+      });
+      return apiJson(503, {
+        error: "ElevenLabs could not authorise the voice demo. Check the ElevenLabs API key linked to the demo agent.",
+        code: response.status === 401 ? "ELEVENLABS_AUTH_401" : response.status === 403 ? "ELEVENLABS_ACCESS_403" : "ELEVENLABS_UPSTREAM"
+      });
     }
     const data: unknown = await response.json();
     const signedUrl = data && typeof data === "object"
