@@ -52,6 +52,9 @@
     }
     pending=true;startButton.disabled=true;setStatus('Preparing your private demo session…');showCall(business.business_name);
     try{
+      if(!navigator.mediaDevices?.getUserMedia)throw new Error('Your browser cannot access the microphone. Use a modern browser on HTTPS.');
+      const microphone=await navigator.mediaDevices.getUserMedia({audio:true});
+      microphone.getTracks().forEach(track=>track.stop());
       const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(business),signal:AbortSignal.timeout(14000)});
       const data=await response.json().catch(()=>({}));
       if(!response.ok||!data.signedUrl)throw new Error(data.error||'Demo session not available.');
@@ -70,7 +73,8 @@
       document.body.append(widget);
       callState.textContent='Waiting for microphone permission…';
       // The widget starts the session after the signed URL and business variables are attached.
-      if(typeof widget.startConversation!=='function')throw new Error('The voice widget is unavailable. Please refresh and try again.');\n      await widget.startConversation();
+      if(typeof widget.startConversation!=='function')throw new Error('The voice widget is unavailable. Please refresh and try again.');
+      await widget.startConversation();
       // Fail-safe if the expected event is not emitted by a future widget version.
       if(pending && widget)startClock();
     }catch(error){stopCall(error instanceof Error?error.message:'Unable to start the demo.');status.classList.add('is-error');}
