@@ -3,7 +3,7 @@ export const siteConfig = {
   brandShort: "ADP",
   descriptor: "Websites, Bookings & Business Automation",
   tagline: "Helping Businesses Grow Smarter.",
-  contactEmail: "andrei@aidigitalprime.co.uk",
+  contactEmail: "contact.aidigitals@gmail.com",
   whatsAppNumber: "+447443757519",
   whatsAppDisplay: "+44 7443 757519",
   whatsAppMessage: "Hi Andrei, I'd like to discuss a free digital audit for my business.",

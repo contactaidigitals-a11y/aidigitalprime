@@ -81,9 +81,9 @@
   function notify(message) { if (!toast) return; toast.textContent = message; toast.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { toast.hidden = true; }, 5000); }
 
   const form = $('#enquiry-form');
-  if (config.contactEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(config.contactEmail)) {
-    $('.form-submit', form).firstChild.textContent = 'Open email draft ';
-    $('#form-note').textContent = 'This button opens your email app with an enquiry draft. Sending requires your confirmation.';
+  if (config.callbackApiUrl) {
+    $('.form-submit', form).firstChild.textContent = 'Send my enquiry ';
+    $('#form-note').textContent = 'Your enquiry will be sent securely to AI Digital Prime. No appointment is booked automatically.';
   }
   form?.addEventListener('submit', async event => {
     event.preventDefault();
@@ -104,7 +104,7 @@
       const submitButton=form.querySelector('.form-submit');
       submitButton.disabled=true;
       try {
-        const res=await fetch(callbackApi,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,business,phone,followup,service,message:msg,consent:true}),signal:AbortSignal.timeout(12000)});
+        const res=await fetch(callbackApi,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,business,phone,followup,service,message:msg,consent:data.get('consent')==='on',website:String(data.get('website')||'')}),signal:AbortSignal.timeout(12000)});
         const answer=await res.json().catch(()=>({}));
         if(!res.ok)throw new Error(answer.error||'We could not submit your request.');
         notify('Your request was received. We will review it and contact you.');
