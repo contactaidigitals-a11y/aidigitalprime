@@ -81,45 +81,51 @@
   function notify(message) { if (!toast) return; toast.textContent = message; toast.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { toast.hidden = true; }, 5000); }
 
   const form = $('#enquiry-form');
-  if (config.callbackApiUrl) {
-    $('.form-submit', form).firstChild.textContent = 'Send my enquiry ';
-    $('#form-note').textContent = 'Your enquiry will be sent securely to AI Digital Prime. No appointment is booked automatically.';
-  }
+  const enquiryButton = form?.querySelector('button[type="submit"]');
+  const formNote = $('#form-note');
+  if (enquiryButton?.firstChild) enquiryButton.firstChild.textContent = 'Send enquiry ';
+  if (formNote) formNote.textContent = 'Your enquiry is sent securely to AI Digital Prime. We will contact you after reviewing it.';
+
   form?.addEventListener('submit', async event => {
     event.preventDefault();
-    if (!form.reportValidity()) return;
+    if (!form.reportValidity() || enquiryButton?.disabled) return;
     const data = new FormData(form);
     const name = String(data.get('name') || '').trim();
     const email = String(data.get('email') || '').trim();
     const business = String(data.get('business') || '').trim();
     const phone = String(data.get('phone') || '').trim();
-    const service = String(data.get('service') || 'AI Voice Assistant');
-    const msg = String(data.get('message') || '').trim();
     const followup = String(data.get('followup') || 'Callback');
-    if (followup==='Callback' && !phone) {notify('Please add a phone number so we can call you back.');form.querySelector('[name="phone"]')?.focus();return;}
-    const subject = `AI Digital Prime enquiry — ${service}`;
-    const body = `New enquiry from AI Digital Prime website\n\nName: ${name}\nEmail: ${email}\nBusiness: ${business || 'Not provided'}\nCallback phone: ${phone || 'Not provided'}\nPreferred contact: ${followup}\nInterested in: ${service}\n\nMessage:\n${msg || 'Please contact me to discuss.'}`;
-    const callbackApi = String(config.callbackApiUrl || '').trim();
-    if (callbackApi.startsWith('https://') || (callbackApi.startsWith('/') && !callbackApi.startsWith('//'))) {
-      const submitButton=form.querySelector('.form-submit');
-      submitButton.disabled=true;
-      try {
-        const res=await fetch(callbackApi,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,business,phone,followup,service,message:msg,consent:data.get('consent')==='on',website:String(data.get('website')||'')}),signal:AbortSignal.timeout(12000)});
-        const answer=await res.json().catch(()=>({}));
-        if(!res.ok)throw new Error(answer.error||'We could not submit your request.');
-        notify('Your request was received. We will review it and contact you.');
-        $('#form-note').textContent='Your request was received. No time has been booked.';
-        form.reset();
-        return;
-      } catch(e) {notify(e.message||'Contact form unavailable. Please try again later.');return;}
-      finally {submitButton.disabled=false;}
+    const service = String(data.get('service') || 'AI Voice Assistant');
+    const message = String(data.get('message') || '').trim();
+    if (followup === 'Callback' && !phone) {
+      notify('Please enter your phone number or choose Email as your preferred contact method.');
+      form.querySelector('[name="phone"]')?.focus();
+      return;
     }
-    if (config.contactEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(config.contactEmail)) {
-      location.href = `mailto:${encodeURIComponent(config.contactEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      notify('Your email app should open with a prepared enquiry. Please send it from there.');
-    } else {
-      try { await navigator.clipboard.writeText(`${subject}\n\n${body}`); notify('Enquiry copied. Contact delivery will be activated before launch.'); }
-      catch { notify('Contact delivery is not connected yet. Please try again after launch.'); }
+    if (enquiryButton) enquiryButton.disabled = true;
+    if (formNote) formNote.textContent = 'Sending your enquiry securely…';
+    try {
+      const response = await fetch('/api/enquiry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name, email, business, phone, followup, service, message,
+          consent: data.get('consent') === 'on',
+          website: String(data.get('website') || '')
+        }),
+        signal: AbortSignal.timeout(15000)
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.ok !== true) throw new Error(result.error || 'We could not send your enquiry. Please try again.');
+      form.reset();
+      if (formNote) formNote.textContent = 'Enquiry sent successfully. Thank you — we will contact you soon.';
+      notify('Thank you! Your enquiry has been sent to AI Digital Prime.');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Contact form temporarily unavailable.';
+      if (formNote) formNote.textContent = 'Not sent: ' + message + ' Please try again.';
+      notify('Unable to send your enquiry right now. Please try again.');
+    } finally {
+      if (enquiryButton) enquiryButton.disabled = false;
     }
   });
 })();
