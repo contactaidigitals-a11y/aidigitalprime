@@ -126,10 +126,11 @@ export async function updateProspect(raw:Record<string,unknown>):Promise<Prospec
       previous.status="suppressed";previous.permission="do-not-contact";
       previous.history.push({at:new Date().toISOString(),action:"suppressed",note:"Suppressed in all future outreach"});
     }else if(raw.action==="manual-sent"){
-      if(!previous.email || !emailValid(previous.email) || previous.permission==="do-not-contact")throw Error("Enter a valid permitted email first.");
+      if(!previous.email || !emailValid(previous.email) || !["corporate-reviewed","consented"].includes(previous.permission) || previous.status==="suppressed")throw Error("Enter a valid permitted email first.");
       previous.status="contacted";previous.lastContactAt=new Date().toISOString();
       previous.history.push({at:previous.lastContactAt,action:"manual-sent",note:"Marked as sent by operator; not independently verified"});
     }else if(raw.action==="save"){
+      const wasSuppressed=previous.status==="suppressed" || previous.permission==="do-not-contact" || previous.history.some(h=>h.action==="unsubscribed");
       for(const field of ["business","companyNumber","incorporationDate","industry","location","website","phone","email","source","sourceUrl","verifiedAt","observation","service","notes","subject","emailBody","consentEvidence"] as const){
         if(Object.prototype.hasOwnProperty.call(raw,field)) (previous[field] as string)=clean(raw[field],field==="emailBody"?6000:field==="notes"?1000:field==="subject"?220:field==="observation"?400:350);
       }
@@ -144,8 +145,9 @@ export async function updateProspect(raw:Record<string,unknown>):Promise<Prospec
       if(typeof status==="string"&&["new","researching","ready","contacted","replied","interested","meeting","not-interested","suppressed"].includes(status))previous.status=status as ProspectStatus;
       if(previous.permission==="consented"&&!previous.consentEvidence)throw Error("Record proof of opt-in before selecting consented.");
       if(previous.permission==="corporate-reviewed"&&!["ltd","llp"].includes(previous.businessType))throw Error("Only verified corporate entities can be marked corporate-reviewed.");
-      if(previous.permission==="do-not-contact")previous.status="suppressed";
-      if(previous.status==="suppressed")previous.permission="do-not-contact";
+      if(wasSuppressed || previous.permission==="do-not-contact" || previous.status==="suppressed"){
+        previous.status="suppressed";previous.permission="do-not-contact";
+      }
       if(previous.email && leads.some(x=>x.id!==id&&x.email===previous.email))throw Error("This email belongs to another prospect.");
       previous.history.push({at:new Date().toISOString(),action:"updated",note:"Details reviewed or status updated"});
     }else if(raw.action==="redraft"){
