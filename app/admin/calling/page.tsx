@@ -28,11 +28,12 @@ export default function ManualCalls(){
  const [operatorNotes,setOperatorNotes]=useState("");
  const [outcome,setOutcome]=useState("No answer");
  const [providerReady,setProviderReady]=useState(false);
+ const [stopAvailable,setStopAvailable]=useState(false);
  const [transcript,setTranscript]=useState<{speaker:string;text:string}[]>([]);
  const [providerStatus,setProviderStatus]=useState("");
  async function refresh(){
   const [leadRes,callRes]=await Promise.all([api("/api/admin/prospects"),api("/api/admin/calls")]);
-  setProspects(leadRes.leads);setCalls(callRes.calls);setProviderReady(callRes.providerReady);
+  setProspects(leadRes.leads);setCalls(callRes.calls);setProviderReady(callRes.providerReady);setStopAvailable(callRes.stopAvailable);
  }
  useEffect(()=>{let mounted=true;api("/api/admin/auth").then(async x=>{
   if(!mounted)return;
@@ -67,6 +68,16 @@ export default function ManualCalls(){
    setTranscript(data.transcript||[]);setProviderStatus(data.status||"unknown");
    if(!data.transcript?.length)setMessage("Transcript is not available yet; provider updates are not guaranteed in real time.");
   }catch(e){setError(e instanceof Error?e.message:"Unable to retrieve transcript.");}
+  finally{setBusy(false);}
+ }
+ async function hangup(){
+  if(!latest)return;
+  if(!window.confirm("END this live Twilio call immediately?"))return;
+  setError("");setBusy(true);
+  try{
+   const res=await api("/api/admin/calls",{action:"hangup",id:latest.id,confirm:true});
+   setLatest(res.call);setMessage(res.message);await refresh();
+  }catch(e){setError(e instanceof Error?e.message:"Unable to end call.");}
   finally{setBusy(false);}
  }
  async function saveResult(event:FormEvent){
@@ -135,7 +146,8 @@ export default function ManualCalls(){
  <div className="aidp-call-info"><p><strong>Conversation ID</strong><span>{latest.elevenConversationId||"Not yet supplied"}</span></p>
  <p><strong>Twilio call SID</strong><span>{latest.twilioCallSid||"Not yet supplied"}</span></p><p><strong>Status</strong><span>{latest.status}</span></p></div>
  <p className="aidp-call-warning">Live transcripts, remote hang-up and takeover require ElevenLabs real-time monitoring (Enterprise) or a separately implemented telephony supervisor bridge. Do not treat this page as a live audio monitoring tool.</p>
- <div className="aidp-call-review"><button type="button" className="aidp-btn aidp-btn-subtle" disabled={busy} onClick={reviewTranscript}>Refresh available transcript</button>{providerStatus&&<span>Provider status: {providerStatus}</span>}</div>
+ <div className="aidp-call-review"><button type="button" className="aidp-btn aidp-btn-subtle" disabled={busy} onClick={reviewTranscript}>Refresh available transcript</button>
+ {stopAvailable&&latest.twilioCallSid&&latest.status==="initiated"&&<button type="button" className="aidp-btn aidp-btn-danger" disabled={busy} onClick={hangup}>End this call</button>}{providerStatus&&<span>Provider status: {providerStatus}</span>}</div>
  {transcript.length>0&&<div className="aidp-call-transcript">{transcript.map((t,i)=><div key={i}><strong>{t.speaker}</strong><p>{t.text}</p></div>)}</div>}
  <form className="aidp-call-result" onSubmit={saveResult}><label>Call outcome<select value={outcome} onChange={e=>setOutcome(e.target.value)}>{outcomes.map(x=><option key={x}>{x}</option>)}</select></label>
  <label>Operator notes<textarea rows={3} value={operatorNotes} onChange={e=>setOperatorNotes(e.target.value)} placeholder="Summary, objection, follow-up, do-not-call request…"/></label>
