@@ -151,7 +151,7 @@ export default function OutreachPage(){
  return <main className="aidp-admin aidp-outreach">
   <header className="aidp-admin-head"><div><div className="aidp-admin-eyebrow">AI DIGITAL PRIME / PROSPECTING CRM</div>
    <h1>Lead discovery & outreach</h1><p>Find UK businesses, personalise emails and manage every follow-up.</p></div>
-   <a className="aidp-btn aidp-btn-subtle" href="/admin">Back to dashboard</a>
+   <div style={{display:"flex",gap:8,flexWrap:"wrap"}}><a className="aidp-btn aidp-btn-subtle" href="/admin/calling">Manual calling</a><a className="aidp-btn aidp-btn-subtle" href="/admin">Back to dashboard</a></div>
   </header>
   {error&&<div className="aidp-admin-alert error" role="alert">{error}</div>}
   {notice&&<div className="aidp-admin-alert" role="status">{notice}</div>}
