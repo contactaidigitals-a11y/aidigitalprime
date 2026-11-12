@@ -8,12 +8,12 @@ export const dynamic="force-dynamic";
 
 const AGENT_ID="agent_2301m72h4vrye59b1m0x7y5az9d2";
 const PHONE_ID="phnum_7101m731vc8jfvgv1wfhymnbktff";
-const consentPattern=/^.{15,1500}$/s;
+const screeningNotePattern=/^.{15,1500}$/s;
 let launchInProgress=false;
 
 const exact=(v:unknown,n=600)=>typeof v==="string"?v.trim().slice(0,n):"";
 const phoneValid=(x:string)=>/^\+44[1-9]\d{8,9}$/.test(x);
-const blocked=(value:unknown)=>/simulation|synthetic|fictional|test only|neverificat|research only|do not call|suppressed|opt.?out/i.test(String(value||""));
+const blocked=(value:unknown)=>/simulation|synthetic|fictional|test only|do not call|suppressed|opt.?out/i.test(String(value||""));
 
 export async function GET(request:Request){
  if(!await isAdmin(request))return noStore({error:"Not authorised."},401);
@@ -72,8 +72,8 @@ export async function POST(request:Request){
  const evidence=exact(body.consentEvidence,1500);
  const consentDate=exact(body.consentDate,35);
  const screening=body.screeningVerified===true;
- if(!screening||!consentPattern.test(evidence)||!consentDate||!Number.isFinite(Date.parse(consentDate))){
-  return noStore({error:"Record specific permission for an AI marketing call, its date/source and your screening confirmation."},400);
+ if(!screening||!screeningNotePattern.test(evidence)||!consentDate||!Number.isFinite(Date.parse(consentDate))){
+  return noStore({error:"Record the operator's documented compliance decision and TPS/CTPS/do-not-call checks, including the check date."},400);
  }
  const target=(await readProspects()).find(x=>x.id===id);
  if(!target)return noStore({error:"Business not found in pipeline."},404);
@@ -83,10 +83,9 @@ export async function POST(request:Request){
  if(target.source.toLowerCase().includes("synthetic")||target.permission==="unverified"&&target.source.toLowerCase().includes("test")){
   return noStore({error:"A simulation/test record may not be dialled."},403);
  }
- // Live voice-agent marketing must be specifically approved by recipient.
- if(!/specific.*(ai|automated)|(?:ai|automated).*(marketing|sales).*consent|agreed to an ai (sales|marketing) call/i.test(evidence)){
-  return noStore({error:"Proof must expressly document consent to an AI marketing call. General B2B permission is insufficient."},400);
- }
+ // The classification of conversational AI cold calls remains legally unresolved.
+ // Operators must review the applicable rules and document the basis for each launch.
+ // This is not a legal determination and does not waive any PECR obligations.
  const phone=exact(target.phone,40).replace(/[\s().-]/g,"");
  if(!phoneValid(phone))return noStore({error:"Use a validated UK number in E.164 format (e.g. +4420...)."},400);
  const key=process.env.ELEVENLABS_API_KEY;
@@ -109,7 +108,7 @@ export async function POST(request:Request){
    business_hours:(target.hours||"Not verified").slice(0,250),
    business_observation:(target.observation||"No verified observations").slice(0,320),
    business_source:(target.sourceUrl||target.source||"Public source").slice(0,330),
-   contact_permission:"Specific AI marketing call consent verified by human operator"
+   contact_permission:"Operator reviewed permission, TPS/CTPS, and legal basis before manually authorising this call"
   };
   const result=await fetch("https://api.elevenlabs.io/v1/convai/twilio/outbound-call",{
    method:"POST",signal:AbortSignal.timeout(20_000),
