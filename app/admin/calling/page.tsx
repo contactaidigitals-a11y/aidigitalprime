@@ -47,7 +47,7 @@ export default function ManualCalls(){
  async function start(event:FormEvent){
   event.preventDefault();
   if(!lead)return;
-  if(!window.confirm("AUTHORISE ONE CALL ONLY to "+lead.business+" at "+lead.phone+"? The call starts immediately. Confirm specific consent to receive an AI marketing call."))return;
+  if(!window.confirm("AUTHORISE ONE CALL ONLY to "+lead.business+" at "+lead.phone+"? The call starts immediately. You confirm that you reviewed UK marketing-call rules, TPS/CTPS and do-not-call records, and accept responsibility for this decision."))return;
   setError("");setMessage("");setBusy(true);
   try{
    const res=await api("/api/admin/calls",{
@@ -129,14 +129,14 @@ export default function ManualCalls(){
  <section className="aidp-panel"><h2>3. Authorise this call</h2>
  {!lead?<p className="aidp-empty">Choose a prospect first.</p>:
  <form className="aidp-call-consent" onSubmit={start}>
- <p>UK rules for AI marketing calls require careful assessment. This console currently requires evidence that this specific recipient agreed to an AI marketing call. A public number alone is not sufficient.</p>
- <label>Evidence and source of specific AI marketing-call consent
- <textarea rows={4} minLength={15} maxLength={1500} required placeholder="Example: Owner explicitly agreed to an AI marketing call by AI Digital Prime on [date] via [channel]. Evidence: [record reference]." value={evidence} onChange={e=>setEvidence(e.target.value)}/></label>
- <label>Consent verified at (date/time, UK)<input type="datetime-local" required value={consentDate} onChange={e=>setConsentDate(e.target.value)}/></label>
+ <p>UK rules for conversational AI marketing calls are not conclusively settled. Before each call, check TPS/CTPS and previous objections, assess whether the call is permitted, and record your decision. Operator supervision does not automatically make an AI call legally equivalent to a human live call. A public number alone is not sufficient.</p>
+ <label>Operator compliance decision and source/check details
+ <textarea rows={4} minLength={15} maxLength={1500} required placeholder="Example: Number checked against TPS/CTPS on [date]; no previous opt-out; source: business website; legal basis assessed by operator. Note any specific consent if available." value={evidence} onChange={e=>setEvidence(e.target.value)}/></label>
+ <label>Checks completed at (date/time, UK)<input type="datetime-local" required value={consentDate} onChange={e=>setConsentDate(e.target.value)}/></label>
  <label className="aidp-call-check"><input type="checkbox" checked={screened} onChange={e=>setScreened(e.target.checked)}/>
- <span>I verified the number, permission, any relevant suppression/TPS/CTPS restrictions, and that this is not a fictional or test lead.</span></label>
+ <span>I have checked TPS/CTPS, previous objections, verified the business number, reviewed the applicable UK legal rules and decided to authorise this one call. I understand monitoring alone does not guarantee the call is classed as live.</span></label>
  {!providerReady&&<p className="aidp-admin-alert error">ElevenLabs credentials are not configured.</p>}
- <button type="submit" disabled={busy||!providerReady||!screened||!evidence.trim()||!consentDate} className="aidp-btn aidp-btn-launch">
+ <button type="submit" disabled={busy||!providerReady||!screened||evidence.trim().length<15||!consentDate} className="aidp-btn aidp-btn-launch">
  {busy?"Processing…":"Authorise and call THIS business"}</button>
  </form>}
  </section>
