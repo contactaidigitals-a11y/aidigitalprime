@@ -125,7 +125,7 @@ export function clearSessionCookie() {
 export function safeOrigin(request: Request) {
   const origin = request.headers.get("origin");
   if (!origin) return false;
-  try { return new URL(origin).host === new URL(request.url).host && new URL(origin).protocol === "https:"; }
+  try { const url = new URL(origin); const host = request.headers.get("host") || new URL(request.url).host; return url.host === host && url.protocol === "https:"; }
   catch { return false; }
 }
 export function noStore(data: unknown, status = 200, headers: Record<string,string> = {}) {
