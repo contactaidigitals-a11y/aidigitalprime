@@ -83,7 +83,7 @@ export async function POST(request:Request){
    business_industry:(target.industry||"Unknown").slice(0,100),
    business_location:(target.location||"UK").slice(0,150),
    business_website:(target.website||"Unknown").slice(0,220),
-   business_hours:"Not verified",
+   business_hours:(target.hours||"Not verified").slice(0,250),
    business_observation:(target.observation||"No verified observations").slice(0,320),
    business_source:(target.sourceUrl||target.source||"Public source").slice(0,330),
    contact_permission:"Specific AI marketing call consent verified by human operator"
