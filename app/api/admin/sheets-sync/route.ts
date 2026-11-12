@@ -54,7 +54,7 @@ export async function POST(req:Request){
   const rows=values.slice(1).map(row=>{
    const x=(i:number)=>typeof row[i]==="string"?String(row[i]).trim():"";
    return {
-    business:x(0),industry:x(1),location:x(2),phone:x(3),website:x(4),
+    business:x(0),industry:x(1),location:x(2),phone:x(3),website:x(4),hours:x(5),
     observation:x(6),source:x(7)||"Google Sheets – Foaie1",
     verifiedAt:x(8),service:x(9),contactPermission:x(10),
     leadStatus:x(11),notes:x(12),
