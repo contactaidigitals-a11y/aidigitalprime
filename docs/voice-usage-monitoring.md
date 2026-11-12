@@ -23,3 +23,15 @@ No Stripe usage invoices or automatic charges are created by these routes. A saf
 - Reconcile with ElevenLabs usage reports before every invoice.
 
 WARNING: This is a metering foundation, **not active automatic usage-based billing**.
+
+
+## Private admin dashboard (November 2026)
+
+- Visit https://aidigitalprime.co.uk/admin . This page starts in a logged-out state and its API endpoints reject unauthenticated requests.
+- Click **Email me a login code**. The six-digit, single-use code is emailed via the existing Resend configuration to AIDP_ADMIN_EMAIL, or to LEAD_TO_EMAIL if no dedicated admin email is set.
+- The code expires after 10 minutes, verification allows at most 5 attempts, resend requests are throttled and sessions expire after 8 hours.
+- The OTP HMAC key is generated with cryptographically secure randomness and stored in the existing persistent Railway volume at /data/aidp-usage/admin-hmac-secret (mode 0600). An optional dedicated AIDP_ADMIN_SECRET overrides it; never commit a secret to GitHub.
+- The dashboard provides CRUD for manual client mappings (plan, customer status, business email, Stripe customer/subscription IDs, ElevenLabs agent ID and optional included minutes). Mappings are persisted in /data/aidp-usage/clients.json.
+- The dashboard reads aggregated call totals from the authenticated ElevenLabs post-call collector. Unmapped agents and explicitly excluded demo/sales agents remain **non-billable**. `AIDP_EXCLUDED_AGENT_IDS` is an optional comma-separated list of outbound/sales agent IDs; the configured ELEVENLABS_DEMO_AGENT_ID is automatically excluded.
+- Excess minutes are a **monitoring preview** by UTC calendar month only. Never invoice directly from these figures; the real Stripe billing period, completed reconciliation and customer agreement are still required.
+- No automatic Stripe invoice/charge or webhook-based Stripe customer discovery is active. Verify mapping identifiers against Stripe and ElevenLabs before activation.
