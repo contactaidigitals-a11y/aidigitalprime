@@ -182,3 +182,50 @@ export async function unsubscribe(token:string):Promise<boolean>{
     await commit(leads);return true;
   });
 }
+
+
+/**
+ * Import verified research rows from the pre-existing Google Sheet into the
+ * local CRM consumed by the operator calling screen.
+ *
+ * Never grant calling permission based on a spreadsheet cell. Never undo
+ * opt-outs or replace operator-edited phone details.
+ */
+export async function mergeSheetProspects(input: Record<string,unknown>[]):Promise<{created:number;updated:number;skipped:number;total:number}> {
+ if(input.length>1000)throw Error("Sheet sync limit exceeded.");
+ return serial(async()=>{
+  const leads=await readProspects(),now=new Date().toISOString();
+  let created=0,updated=0,skipped=0;
+  for(const raw of input) {
+   const source=clean(raw.source,300);
+   const permission=clean(raw.contactPermission,100);
+   const status=clean(raw.leadStatus,100);
+   if(/simulation|synthetic|fictional/i.test(source+" "+permission+" "+status)){skipped++;continue;}
+   let next:Prospect;
+   try{next=seed(raw,now);}catch{skipped++;continue;}
+   const match=leads.find(x=>
+    (next.companyNumber && x.companyNumber===next.companyNumber) ||
+    (norm(x.business)===norm(next.business) && norm(x.location)===norm(next.location))
+   );
+   if(!match) {
+    if(leads.length>=MAX)break;
+    next.status="researching";
+    next.history.push({at:now,action:"sheet-sync",note:"Imported from the existing research Sheet; no call approval is implied"});
+    leads.push(next);created++;continue;
+   }
+   let changed=false;
+   for(const key of ["phone","website","industry","location","observation","source","sourceUrl","incorporationDate","companyNumber"] as const){
+    const incoming=next[key],existing=match[key];
+    if(!existing && incoming){match[key]=incoming;changed=true;}
+   }
+   if(changed){
+    match.updatedAt=now;
+    match.history.push({at:now,action:"sheet-sync",note:"Filled missing details from research Sheet"});
+    match.history=match.history.slice(-40);
+    updated++;
+   }else skipped++;
+  }
+  if(created||updated)await commit(leads);
+  return {created,updated,skipped,total:leads.length};
+ });
+}
