@@ -1,0 +1,42 @@
+.aidp-outreach-grid { max-width:1440px; margin:0 auto 22px; display:grid; grid-template-columns:minmax(320px,.9fr) minmax(0,1.1fr);gap:18px;align-items:start }
+.aidp-outreach textarea { font-family:inherit;display:block;width:100%;background:#fff;color:#142d4d;border:1px solid #cdd8e7;border-radius:10px;resize:vertical;font-size:13px;padding:12px;line-height:1.5;min-height:90px }
+.aidp-outreach .aidp-tabs { display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;border-bottom:1px solid #e3e9f2;padding-bottom:12px }
+.aidp-outreach .aidp-tabs button { border:1px solid #dce5ef;background:white;color:#415572;border-radius:9px;cursor:pointer;padding:9px 12px;font-size:12px;font-weight:700 }
+.aidp-outreach .aidp-tabs button.active {background:#183e7b;color:#fff;border-color:#183e7b}
+.aidp-form-stack {display:grid;gap:15px}
+.aidp-form-stack>label, .aidp-inline-inputs label {display:grid;gap:6px;font-size:12px;font-weight:800;color:#3b4b61}
+.aidp-outreach-tip { font-size:13px;line-height:1.55;color:#6a788f;margin:0 }
+.aidp-config-warning {font-size:12px;line-height:1.6;background:#fff5e3;color:#805310;border:1px solid #e8d8ae;padding:12px;border-radius:10px;margin:0;overflow-wrap:anywhere}
+.aidp-config-warning a { color:#244a84 }
+.aidp-inline-inputs {display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.aidp-discovery-results {max-height:270px;overflow:auto;border:1px solid #e2eaf5;border-radius:12px}
+.aidp-discovery-results>div {padding:10px 13px;border-bottom:1px solid #e2eaf5;display:grid;gap:4px}
+.aidp-discovery-results strong {font-size:12px;color:#163966}
+.aidp-discovery-results small {font-size:11px;color:#7d8798}
+.aidp-discovery-results>p {font-size:12px;color:#66748a;padding:8px 12px}
+.aidp-lead-filters {display:grid;grid-template-columns:1fr 160px;gap:10px;margin-bottom:12px}
+.aidp-prospect-list {display:grid;gap:7px;max-height:680px;overflow-y:auto}
+.aidp-prospect { border:1px solid #e1e8f4;background:#fff;padding:11px;border-radius:10px;width:100%;text-align:left;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;cursor:pointer }
+.aidp-prospect:hover,.aidp-prospect.selected {background:#f0f5fe;border-color:#aac1e9}
+.aidp-prospect strong {font-size:13px;color:#142d51;display:block;overflow:hidden;text-overflow:ellipsis}
+.aidp-prospect small {font-size:11px;color:#73849d;display:block;margin-top:5px;overflow:hidden;text-overflow:ellipsis}
+.aidp-prospect-stage {display:inline-flex;align-items:center;border:1px solid #dbe5f0;background:#edf3fb;color:#31507b;border-radius:30px;font-size:10px;font-weight:800;padding:5px 9px;white-space:nowrap}
+.aidp-prospect-stage.interested,.aidp-prospect-stage.replied,.aidp-prospect-stage.meeting {background:#e4f5e9;color:#1a6245;border-color:#bae1c8}
+.aidp-prospect-stage.suppressed,.aidp-prospect-stage.not-interested {background:#fff0ef;color:#ae4444;border-color:#facdcb}
+.aidp-prospect-email {grid-column:1/-1;font-size:11px!important;margin:0!important}
+.aidp-lead-detail {max-width:1440px;margin:auto auto 20px!important}
+.aidp-lead-fields {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.aidp-lead-fields>label {display:grid;gap:6px;font-size:12px;font-weight:700;color:#41516a;min-width:0}
+.aidp-lead-fields>.wide {grid-column:1/-1}
+.aidp-lead-detail .aidp-form-actions {margin-top:24px}
+.aidp-btn-danger {background:#fff;border:1px solid #ffbec7;color:#a92d41}
+.aidp-btn-danger:hover {background:#fff2f3}
+.aidp-history-heading {margin-top:30px!important}
+.aidp-history {max-height:210px;overflow-y:auto;display:grid;gap:6px}
+.aidp-history>div {border-bottom:1px solid #e4e9ef;padding:8px 0}
+.aidp-history strong {font-size:12px;color:#183c6c}
+.aidp-history span {font-size:11px;color:#8993a1;margin-left:10px}
+.aidp-history p {font-size:12px;margin:5px 0;color:#62718a}
+.aidp-legal-note {max-width:1440px;margin:22px auto!important}
+@media(max-width:1050px) {.aidp-outreach-grid{grid-template-columns:1fr}.aidp-lead-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px) {.aidp-lead-fields{grid-template-columns:1fr}.aidp-inline-inputs{grid-template-columns:1fr}.aidp-lead-filters{grid-template-columns:1fr}.aidp-admin-head{flex-wrap:wrap}}
