@@ -3,7 +3,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import "../admin.css";
 import "./calling.css";
 
-type Prospect={id:string;business:string;phone:string;location:string;industry:string;website:string;source:string;sourceUrl:string;status:string;notes:string;observation:string;permission:string};
+type Prospect={id:string;business:string;phone:string;location:string;industry:string;website:string;hours?:string;source:string;sourceUrl:string;status:string;notes:string;observation:string;permission:string};
 type Call={id:string;prospectId:string;business:string;phone:string;elevenConversationId:string;twilioCallSid:string;createdAt:string;status:"initiated"|"completed"|"failed";outcome:string;operatorNotes:string};
 const outcomes=["Interested","Callback requested","No answer","Voicemail","Not interested","Do not call","Wrong number","Other"];
 async function api(url:string,body?:unknown){
@@ -95,6 +95,7 @@ export default function ManualCalls(){
  <p><strong>Industry</strong><span>{lead.industry||"Not verified"}</span></p>
  <p><strong>Location</strong><span>{lead.location||"Not verified"}</span></p>
  <p><strong>Website</strong><span>{lead.website||"Not provided"}</span></p>
+ <p><strong>Opening hours</strong><span>{lead.hours||"Not verified"}</span></p>
  <p><strong>Business observation</strong><span>{lead.observation||"No verified notes"}</span></p>
  <p><strong>Research source</strong><span>{lead.source||"Unknown"}</span></p>
  <p><strong>CRM status</strong><span>{lead.status}</span></p></div>
