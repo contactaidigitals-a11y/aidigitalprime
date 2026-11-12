@@ -15,6 +15,7 @@ export type Prospect = {
   location: string;
   website: string;
   phone: string;
+  hours?: string;
   email: string;
   businessType: "ltd" | "llp" | "sole-trader" | "unknown";
   permission: "unverified" | "corporate-reviewed" | "consented" | "do-not-contact";
@@ -82,7 +83,7 @@ function seed(raw: Record<string,unknown>, now: string): Prospect {
   const prospect: Prospect={
     id:randomUUID(),business,companyNumber,incorporationDate:date,
     industry:clean(raw.industry,100),location:clean(raw.location,160),website:clean(raw.website,220),
-    phone:clean(raw.phone,40),email:clean(raw.email,180).toLowerCase(),
+    phone:clean(raw.phone,40),hours:clean(raw.hours || raw.business_hours,250),email:clean(raw.email,180).toLowerCase(),
     businessType:type as Prospect["businessType"],
     permission:"unverified",consentEvidence:"",source:clean(raw.source,100)||"Manual import",
     sourceUrl:clean(raw.sourceUrl,350),verifiedAt:clean(raw.verifiedAt,35),
@@ -131,7 +132,7 @@ export async function updateProspect(raw:Record<string,unknown>):Promise<Prospec
       previous.history.push({at:previous.lastContactAt,action:"manual-sent",note:"Marked as sent by operator; not independently verified"});
     }else if(raw.action==="save"){
       const wasSuppressed=previous.status==="suppressed" || previous.permission==="do-not-contact" || previous.history.some(h=>h.action==="unsubscribed");
-      for(const field of ["business","companyNumber","incorporationDate","industry","location","website","phone","email","source","sourceUrl","verifiedAt","observation","service","notes","subject","emailBody","consentEvidence"] as const){
+      for(const field of ["business","companyNumber","incorporationDate","industry","location","website","phone","hours","email","source","sourceUrl","verifiedAt","observation","service","notes","subject","emailBody","consentEvidence"] as const){
         if(Object.prototype.hasOwnProperty.call(raw,field)) (previous[field] as string)=clean(raw[field],field==="emailBody"?6000:field==="notes"?1000:field==="subject"?220:field==="observation"?400:350);
       }
       previous.email=previous.email.toLowerCase();
@@ -214,7 +215,7 @@ export async function mergeSheetProspects(input: Record<string,unknown>[]):Promi
     leads.push(next);created++;continue;
    }
    let changed=false;
-   for(const key of ["phone","website","industry","location","observation","source","sourceUrl","incorporationDate","companyNumber"] as const){
+   for(const key of ["phone","hours","website","industry","location","observation","source","sourceUrl","incorporationDate","companyNumber"] as const){
     const incoming=next[key],existing=match[key];
     if(!existing && incoming){match[key]=incoming;changed=true;}
    }
