@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import "./admin.css";
 
 type Plan = "Starter" | "Growth" | "Pro";
@@ -67,7 +67,7 @@ export default function AdminPage() {
     } catch (e) { setError(e instanceof Error ? e.message : "Unable to send code."); }
     finally { setBusy(false); }
   }
-  async function verify(event: React.FormEvent) {
+  async function verify(event: FormEvent) {
     event.preventDefault(); setError(""); setBusy(true);
     try {
       await callApi("/api/admin/auth", { action: "verify", code });
@@ -87,7 +87,7 @@ export default function AdminPage() {
     try { await loadOverview(month); } catch (e) { setError(e instanceof Error ? e.message : "Unable to load."); }
     finally { setBusy(false); }
   }
-  async function saveClient(event: React.FormEvent) {
+  async function saveClient(event: FormEvent) {
     event.preventDefault(); setError(""); setNotice(""); setSaving(true);
     try {
       await callApi("/api/admin/clients", { ...form, includedMinutes: form.includedMinutes === "" ? null : Number(form.includedMinutes), action: "save" });
