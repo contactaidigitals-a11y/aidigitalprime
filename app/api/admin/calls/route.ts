@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { isAdmin, noStore, safeOrigin } from "../_auth";
-import { readProspects } from "../prospects/_store";
+import { readProspects, updateProspect } from "../prospects/_store";
 import { readOperatorCalls, saveOperatorCall, updateOperatorCall } from "./_store";
 
 export const runtime="nodejs";
@@ -62,6 +62,7 @@ export async function POST(request:Request){
   if(!["initiated","completed","failed"].includes(String(status)))return noStore({error:"Invalid status."},400);
   try{
    const call=await updateOperatorCall(id,status as "initiated"|"completed"|"failed",exact(body.outcome,150),exact(body.operatorNotes,2000));
+   if(exact(body.outcome)==="Do not call")await updateProspect({id:call.prospectId,action:"suppress"});
    return noStore({ok:true,call});
   }catch{return noStore({error:"Unable to update call."},400);}
  }
@@ -94,6 +95,9 @@ export async function POST(request:Request){
  launchInProgress=true;
  try{
   const existing=await readOperatorCalls();
+  if(existing.some(x=>x.phone===phone&&x.outcome==="Do not call")){
+   return noStore({error:"This number has a recorded do-not-call request."},403);
+  }
   if(existing.some(x=>x.prospectId===id&&Date.now()-Date.parse(x.createdAt)<60_000)){
    return noStore({error:"This business was already called in the last minute. Retry is blocked."},429);
   }
