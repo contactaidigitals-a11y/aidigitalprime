@@ -22,6 +22,7 @@ export async function GET(request:Request){
   return noStore({
    calls:calls.slice().reverse().slice(0,200),
    providerReady:Boolean(process.env.ELEVENLABS_API_KEY),
+   stopAvailable:Boolean(process.env.TWILIO_ACCOUNT_SID&&process.env.TWILIO_AUTH_TOKEN),
    agentId:AGENT_ID,
    manualLaunchOnly:true,
    realtimeMonitoringRequiresEnterprise:true
@@ -37,6 +38,24 @@ export async function POST(request:Request){
  try{const parsed:unknown=await request.json();if(!parsed||typeof parsed!=="object"||Array.isArray(parsed))throw Error();body=parsed as Record<string,unknown>}
  catch{return noStore({error:"Invalid request."},400)}
  const action=body.action;
+ if(action==="hangup"){
+  if(body.confirm!==true)return noStore({error:"Explicit operator confirmation is required to end a call."},400);
+  const call=(await readOperatorCalls()).find(x=>x.id===exact(body.id,64));
+  if(!call||!/^CA[a-f0-9]{32}$/i.test(call.twilioCallSid))return noStore({error:"No controllable Twilio call found."},404);
+  const account=process.env.TWILIO_ACCOUNT_SID||"";
+  const auth=process.env.TWILIO_AUTH_TOKEN||"";
+  if(!/^AC[a-f0-9]{32}$/i.test(account)||!auth)return noStore({error:"Twilio supervisor credentials are not configured."},503);
+  try{
+   const result=await fetch("https://api.twilio.com/2010-04-01/Accounts/"+account+"/Calls/"+call.twilioCallSid+".json",{
+    method:"POST",signal:AbortSignal.timeout(12000),
+    headers:{Authorization:"Basic "+Buffer.from(account+":"+auth).toString("base64"),"Content-Type":"application/x-www-form-urlencoded"},
+    body:new URLSearchParams({Status:"completed"})
+   });
+   if(!result.ok)return noStore({error:"Twilio rejected the hang-up command ("+result.status+")."},502);
+   const updated=await updateOperatorCall(call.id,"completed",call.outcome||"Ended by operator",call.operatorNotes);
+   return noStore({ok:true,call:updated,message:"Twilio accepted the command to end this call."});
+  }catch{return noStore({error:"Unable to confirm hang-up; inspect Twilio before retrying."},502);}
+ }
  if(action==="update"){
   const id=exact(body.id,64);
   const status=body.status;
