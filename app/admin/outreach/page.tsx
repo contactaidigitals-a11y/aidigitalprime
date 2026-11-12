@@ -6,7 +6,7 @@ import "./outreach.css";
 type Status="new"|"researching"|"ready"|"contacted"|"replied"|"interested"|"meeting"|"not-interested"|"suppressed";
 type Permission="unverified"|"corporate-reviewed"|"consented"|"do-not-contact";
 type Prospect={
- id:string;business:string;companyNumber:string;incorporationDate:string;industry:string;location:string;
+ id:string;business:string;companyNumber:string;incorporationDate:string;industry:string;location:string;hours?:string;
  website:string;phone:string;email:string;businessType:"ltd"|"llp"|"sole-trader"|"unknown";
  permission:Permission;consentEvidence:string;source:string;sourceUrl:string;verifiedAt:string;
  observation:string;service:string;notes:string;status:Status;subject:string;emailBody:string;
@@ -221,7 +221,7 @@ export default function OutreachPage(){
     <div className="aidp-section-heading"><div><h2>Prospect: {details.business}</h2><p>Update verified facts, draft email and track next steps.</p></div><button type="button" className="aidp-btn aidp-btn-subtle" onClick={()=>{setDetails(null);setSelected("")}}>Close</button></div>
     <form onSubmit={saveDetails}>
      <div className="aidp-lead-fields">
-      {([["business","Business"],["companyNumber","Company number"],["incorporationDate","Incorporated (YYYY-MM-DD)"],["industry","Industry"],["location","Location"],["website","Website"],["phone","Phone"],["email","Email"],["source","Lead source"],["sourceUrl","Source URL"],["verifiedAt","Verified date"]] as const).map(([key,label])=><label key={key}>{label}<input value={details[key]} onChange={e=>change(key,e.target.value)}/></label>)}
+      {([["business","Business"],["companyNumber","Company number"],["incorporationDate","Incorporated (YYYY-MM-DD)"],["industry","Industry"],["location","Location"],["website","Website"],["phone","Phone"],["hours","Opening hours"],["email","Email"],["source","Lead source"],["sourceUrl","Source URL"],["verifiedAt","Verified date"]] as const).map(([key,label])=><label key={key}>{label}<input value={details[key]||""} onChange={e=>change(key,e.target.value)}/></label>)}
       <label>Legal entity<select value={details.businessType} onChange={e=>change("businessType",e.target.value)}>
        <option value="unknown">Not confirmed</option><option value="ltd">Limited company (LTD)</option><option value="llp">LLP</option><option value="sole-trader">Sole trader</option></select></label>
       <label>Email eligibility<select value={details.permission} onChange={e=>change("permission",e.target.value)}>
