@@ -117,7 +117,7 @@ export default function AdminPage() {
     <header className="aidp-admin-head">
       <div><span className="aidp-admin-eyebrow">AI DIGITAL PRIME / PRIVATE OPERATIONS</span>
         <h1>Admin dashboard</h1><p>Clients, ElevenLabs usage and Stripe subscription mapping</p></div>
-      {authenticated && <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}><a className="aidp-btn aidp-btn-subtle" href="/admin/outreach">Lead discovery & outreach</a><button type="button" className="aidp-btn aidp-btn-subtle" onClick={signOut} disabled={busy}>Sign out</button></div>}
+      {authenticated && <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}><a className="aidp-btn aidp-btn-subtle" href="/admin/outreach">Lead discovery & outreach</a><a className="aidp-btn aidp-btn-subtle" href="/admin/calling">Manual AI calling</a><button type="button" className="aidp-btn aidp-btn-subtle" onClick={signOut} disabled={busy}>Sign out</button></div>}
     </header>
     {error && <div className="aidp-admin-alert error" role="alert">{error}</div>}
     {notice && <div className="aidp-admin-alert" role="status">{notice}</div>}
