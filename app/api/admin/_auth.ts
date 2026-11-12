@@ -4,6 +4,7 @@ import path from "node:path";
 
 const ROOT = process.env.AIDP_USAGE_DATA_DIR || "/data/aidp-usage";
 const AUTH = path.join(ROOT, "admin-auth.json");
+const KEYFILE = path.join(ROOT, "admin-hmac-secret");
 const SESSIONS = path.join(ROOT, "sessions");
 const COOKIE = "aidp_admin_session";
 const TTL = 10 * 60 * 1000;
@@ -12,20 +13,27 @@ type Challenge = { digest: string; nonce: string; expires: number; attempts: num
 type Session = { expires: number };
 
 export function configured() {
-  return Boolean((process.env.AIDP_ADMIN_SECRET || "").length >= 32 &&
-    (process.env.AIDP_ADMIN_EMAIL || process.env.LEAD_TO_EMAIL) &&
+  return Boolean((process.env.AIDP_ADMIN_EMAIL || process.env.LEAD_TO_EMAIL) &&
     process.env.RESEND_API_KEY && process.env.LEAD_FROM_EMAIL);
 }
 export function adminEmail() {
   return process.env.AIDP_ADMIN_EMAIL || process.env.LEAD_TO_EMAIL || "";
 }
-function secret() {
-  const value = process.env.AIDP_ADMIN_SECRET || "";
-  if (value.length < 32) throw new Error("Admin authentication is not configured");
+async function secret() {
+  const override = process.env.AIDP_ADMIN_SECRET;
+  if (override && override.length >= 32) return override;
+  await mkdir(ROOT, { recursive: true, mode: 0o700 });
+  try {
+    await writeFile(KEYFILE, randomBytes(48).toString("hex"), { flag: "wx", mode: 0o600 });
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+  }
+  const value = (await readFile(KEYFILE, "utf8")).trim();
+  if (value.length < 64) throw new Error("Invalid admin secret file");
   return value;
 }
-function digest(nonce: string, code: string) {
-  return createHmac("sha256", secret()).update(nonce + ":" + code).digest("hex");
+async function digest(nonce: string, code: string) {
+  return createHmac("sha256", await secret()).update(nonce + ":" + code).digest("hex");
 }
 function sessionFile(token: string) {
   return path.join(SESSIONS, createHash("sha256").update(token).digest("hex") + ".json");
@@ -54,7 +62,7 @@ export async function requestCode(): Promise<"sent" | "limited" | "failed"> {
   const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
   const nonce = randomBytes(16).toString("hex");
   const state: Challenge = {
-    digest: digest(nonce, code), nonce, expires: now + TTL, attempts: 0,
+    digest: await digest(nonce, code), nonce, expires: now + TTL, attempts: 0,
     lastSent: now, windowStart, sentInWindow: sentInWindow + 1,
   };
   await saveChallenge(state);
@@ -80,7 +88,7 @@ export async function verifyCode(code: string): Promise<string | null> {
   state.attempts += 1;
   await saveChallenge(state);
   const expected = Buffer.from(state.digest, "hex");
-  const actual = Buffer.from(digest(state.nonce, code), "hex");
+  const actual = Buffer.from(await digest(state.nonce, code), "hex");
   if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) return null;
   // Immediately invalidate the one-time code.
   await rm(AUTH, { force: true });
