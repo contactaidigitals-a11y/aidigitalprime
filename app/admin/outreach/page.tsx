@@ -131,6 +131,14 @@ export default function OutreachPage(){
   const url="mailto:"+encodeURIComponent(lead.email)+"?subject="+encodeURIComponent(lead.subject)+"&body="+encodeURIComponent(body);
   window.location.href=url;
  }
+ async function aiDraft(){
+  if(!details)return;
+  await submit("ai-draft",async()=>{
+   const res=await api("/api/admin/prospects/ai-draft",{id:details.id});
+   setDetails(prev=>prev?{...prev,subject:res.subject,emailBody:res.body}:prev);
+   setNotice("AI draft generated using saved details. Review it, then click Save lead & draft.");
+  });
+ }
  async function optedInSend(){
   if(!details)return;
   if(!window.confirm("Send this email using Resend? Only use this for documented opted-in contacts."))return;
@@ -220,6 +228,7 @@ export default function OutreachPage(){
      <div className="aidp-form-actions">
       <button className="aidp-btn" type="submit" disabled={!!busy}>{busy==="save"?"Saving…":"Save lead & draft"}</button>
       <button className="aidp-btn aidp-btn-subtle" type="button" disabled={!!busy} onClick={()=>act("redraft")}>Regenerate draft from saved facts</button>
+      <button className="aidp-btn aidp-btn-subtle" type="button" disabled={!!busy} onClick={aiDraft}>{busy==="ai-draft"?"Writing…":"Generate with AI"}</button>
       {details.email&&details.permission==="corporate-reviewed"&&details.status!=="suppressed"&&<button className="aidp-btn aidp-btn-subtle" type="button" onClick={()=>mailTo(details)}>Open in email app</button>}
       {details.email&&details.permission==="corporate-reviewed"&&<button className="aidp-btn aidp-btn-subtle" type="button" disabled={!!busy} onClick={()=>act("manual-sent")}>Mark manually sent</button>}
       {details.email&&details.permission==="consented"&&<button className="aidp-btn aidp-btn-subtle" type="button" disabled={!!busy} onClick={optedInSend}>Send opted-in email</button>}
