@@ -56,6 +56,8 @@ export default function OutreachPage(){
  const [search,setSearch]=useState("");
  const [selected,setSelected]=useState("");
  const [discoveryReady,setDiscoveryReady]=useState(false);
+ const [sheetSyncReady,setSheetSyncReady]=useState(false);
+ const [sheetShareEmail,setSheetShareEmail]=useState("");
  const [found,setFound]=useState<Discovered[]>([]);
  const [days,setDays]=useState(30);
  const [offset,setOffset]=useState(0);
@@ -72,7 +74,8 @@ export default function OutreachPage(){
   if(!d.authenticated){setAuth("required");return}
   setAuth("ready");
   await load();
-  const res=await api("/api/admin/discovery");if(alive)setDiscoveryReady(res.configured);
+  const [res,sheet]=await Promise.all([api("/api/admin/discovery"),api("/api/admin/sheets-sync")]);
+  if(alive){setDiscoveryReady(res.configured);setSheetSyncReady(sheet.configured);setSheetShareEmail(sheet.serviceAccountEmail||"");}
  }).catch(e=>{if(alive){setError(e.message);setAuth("required")}});return()=>{alive=false}},[]);
  const stats=useMemo(()=>({total:leads.length,ready:leads.filter(x=>x.status==="ready").length,
  contacted:leads.filter(x=>x.status==="contacted").length,
@@ -88,6 +91,12 @@ export default function OutreachPage(){
   await submit("discover",async()=>{
    const res=await api("/api/admin/discovery",{days,limit:100,offset});
    setFound(res.leads);setNotice("Found "+res.leads.length+" Companies House registrations. Public contacts still need manual verification.");
+  });
+ }
+ async function syncSheet(){
+  await submit("sync-sheet",async()=>{
+    const res=await api("/api/admin/sheets-sync",{});
+    await load();setNotice("Google Sheets: "+res.created+" new, "+res.updated+" updated, "+res.skipped+" unchanged or excluded. No calls made.");
   });
  }
  async function importFound(){
@@ -183,6 +192,10 @@ export default function OutreachPage(){
        {found.length>10&&<p>…and {found.length-10} other registrations.</p>}</div>}
      </div>}
      {panel==="import"&&<div className="aidp-form-stack">
+      <p className="aidp-outreach-tip"><strong>Connect the existing lead Sheet:</strong> Synchronize verified research from tab Foaie1 into the call table. {sheetSyncReady?"The Google connection is configured.":"A Google service account must be configured in Railway and given read access to the spreadsheet."}</p>
+      {sheetShareEmail&&<p className="aidp-outreach-tip">Share the Google Sheet (Viewer) with: <strong>{sheetShareEmail}</strong></p>}
+      <button className="aidp-btn" type="button" disabled={!!busy||!sheetSyncReady} onClick={syncSheet}>{busy==="sync-sheet"?"Synchronising…":"Sync from Google Sheets"}</button>
+      <p className="aidp-outreach-tip">Alternatively, paste rows below if the Google connection is not configured yet.</p>
       <p className="aidp-outreach-tip">Open the existing “Calinescu Technologies – Business Leads” Sheet, copy its rows (columns A:M), and paste below. Comma-separated CSV with headers also works. Email addresses can be added later.</p>
       <textarea rows={8} value={paste} onChange={e=>setPaste(e.target.value)} placeholder={"Business\tIndustry\tLocation\tPhone\tWebsite\tHours\tObservation\tSource\tVerified date\tService opportunity\tContact permission\tLead status\tNotes"}/>
       <button className="aidp-btn" type="button" disabled={!!busy||!paste.trim()} onClick={importPasted}>{busy==="paste"?"Importing…":"Import companies and skip duplicates"}</button>
