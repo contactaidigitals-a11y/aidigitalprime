@@ -1,0 +1,62 @@
+.aidp-admin { min-height: 100vh; padding: 44px clamp(18px, 5vw, 82px) 60px; background: #f3f6fb; color: #19253b; font-family: Arial, sans-serif; }
+.aidp-admin *, .aidp-admin *:before, .aidp-admin *:after { box-sizing: border-box; }
+.aidp-admin-head { max-width: 1440px; margin: auto auto 30px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.aidp-admin-eyebrow { font-size: 11px; letter-spacing: 2px; color: #3c62a3; font-weight: 800; }
+.aidp-admin h1 { font-size: clamp(30px, 4vw, 46px); line-height: 1.1; letter-spacing: -.05em; margin: 10px 0; color: #0d2341; }
+.aidp-admin h2 { font-size: 21px; letter-spacing: -.03em; margin: 0 0 6px; color: #112747; }
+.aidp-admin h3 { font-size: 17px; margin: 0 0 5px; color: #0e274a; }
+.aidp-admin-head p, .aidp-section-heading p, .aidp-login p { color: #69758b; margin: 5px 0 0; font-size: 14px; line-height: 1.6; }
+.aidp-btn { background: #153e81; color: white; border: 1px solid #153e81; border-radius: 11px; padding: 12px 18px; font-size: 14px; font-weight: 700; cursor: pointer; transition: background .2s; }
+.aidp-btn:hover { background: #2359ae; }
+.aidp-btn:disabled { opacity: .55; cursor: not-allowed; }
+.aidp-btn-subtle { background: white; border-color: #cad6e8; color: #163b75; }
+.aidp-btn-subtle:hover { background: #e9f0fd; }
+.aidp-panel { padding: 25px; border: 1px solid #dfe7f3; background: white; border-radius: 18px; box-shadow: 0 5px 23px #19365c0a; }
+.aidp-admin-tools { max-width: 1440px; margin: auto auto 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-size: 14px; }
+.aidp-admin-tools label { font-weight: 700; }
+.aidp-admin input, .aidp-admin select { font-family: inherit; width: 100%; border: 1px solid #cdd8e7; border-radius: 10px; font-size: 14px; padding: 11px 12px; background: #fff; color: #142d4d; min-height: 43px; outline-offset: 2px; }
+.aidp-admin-tools input { width: 178px; }
+.aidp-admin-billing { margin-left: auto; font-size: 12px; background: #fdf0d8; color: #855504; border: 1px solid #f2dfbb; border-radius: 100px; padding: 9px 13px; font-weight: 800; }
+.aidp-kpis { max-width: 1440px; margin: auto auto 22px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.aidp-kpi { background: #fff; border-radius: 16px; border: 1px solid #e0e8f1; padding: 20px; }
+.aidp-kpi span { font-size: 12px; color: #6a768a; display: block; font-weight: 700; }
+.aidp-kpi strong { font-size: 35px; font-weight: 800; display: block; letter-spacing: -.05em; margin: 10px 0 2px; color: #103365; }
+.aidp-kpi small { color: #7f8b9e; font-size: 11px; }
+.aidp-admin-grid { max-width: 1440px; margin: auto auto 22px; display: grid; grid-template-columns: minmax(300px, .95fr) minmax(0, 1.35fr); gap: 18px; align-items: start; }
+.aidp-admin > .aidp-panel { max-width: 1440px; margin: auto auto 22px; }
+.aidp-section-heading { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 22px; }
+.aidp-client-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 14px; }
+.aidp-client-form label, .aidp-login-form label { display: flex; flex-direction: column; gap: 7px; font-size: 12px; font-weight: 800; color: #36435a; }
+.aidp-client-form label small { font-weight: 400; color: #69788c; }
+.aidp-form-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+.aidp-empty { text-align: center; background: #f8fafd; border: 1px dashed #d8e3f1; color: #66758a; border-radius: 12px; padding: 30px 18px; font-size: 14px; }
+.aidp-customer-list { display: grid; gap: 14px; }
+.aidp-customer { background: #f9fbff; border: 1px solid #e0e8f2; padding: 17px; border-radius: 13px; }
+.aidp-customer-top { display: flex; justify-content: space-between; align-items: start; gap: 10px; }
+.aidp-customer-top span { color: #65738a; font-size: 12px; text-transform: capitalize; }
+.aidp-customer-buttons { display: flex; gap: 8px; }
+.aidp-customer-buttons button, .aidp-text-button { border: none; background: transparent; color: #26538c; font-size: 13px; font-weight: 700; cursor: pointer; }
+.aidp-customer-buttons button:last-child { color: #9b3147; }
+.aidp-customer-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; border-top: 1px solid #dfe7f0; border-bottom: 1px solid #dfe7f0; margin: 14px 0; padding: 14px 0; }
+.aidp-customer-stats strong { display: block; font-size: 23px; color: #183b71; }
+.aidp-customer-stats small { font-size: 11px; color: #738299; }
+.aidp-meta { display: grid; gap: 6px; font-size: 11px; color: #60718b; overflow-wrap: anywhere; }
+.aidp-warning { color: #a44811; font-weight: 800; }
+.aidp-footnote { color: #6e7c91; font-size: 11px; line-height: 1.6; margin-bottom: 0; }
+.aidp-table-wrap { width: 100%; overflow-x: auto; }
+.aidp-admin table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+.aidp-admin th, .aidp-admin td { border-bottom: 1px solid #e0e7ef; padding: 13px 12px; }
+.aidp-admin th { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: .04em; }
+.aidp-admin-alert { background: #e8f4ee; border: 1px solid #b5dac7; color: #205a40; padding: 13px 16px; border-radius: 10px; margin: 0 auto 18px; max-width: 1440px; font-size: 13px; }
+.aidp-admin-alert.error { background: #fff1f0; border-color: #ffc8c6; color: #942c2c; }
+.aidp-login { max-width: 460px !important; margin: 40px auto 70px !important; text-align: center; padding: 36px; }
+.aidp-login h2 { font-size: 27px; }
+.aidp-login p { margin-bottom: 25px; }
+.aidp-lock { font-size: 30px; margin-bottom: 12px; }
+.aidp-login-form { display: grid; gap: 15px; }
+.aidp-login-form label { text-align: left; }
+.aidp-login-form input { text-align: center; letter-spacing: .3em; font-size: 22px; font-weight: 800; }
+.aidp-admin-footer { max-width: 1440px; margin: 34px auto auto; text-align: center; font-size: 12px; color: #8994a6; }
+.aidp-admin-footer a { color: #244a88; }
+@media (max-width: 1040px) { .aidp-admin-grid { grid-template-columns: 1fr; } .aidp-kpis { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .aidp-admin { padding: 24px 12px 46px; } .aidp-admin-head { align-items: flex-start; } .aidp-admin-head h1 { font-size: 29px; } .aidp-panel { padding: 17px; } .aidp-client-form { grid-template-columns: 1fr; } .aidp-admin-billing { margin-left: 0; } .aidp-kpis { gap: 9px; } .aidp-kpi { padding: 13px; } .aidp-kpi strong { font-size: 28px; } }
