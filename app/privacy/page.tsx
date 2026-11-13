@@ -6,9 +6,14 @@ export const metadata: Metadata = { title: "Privacy Policy" };
 
 export default function PrivacyPage() {
   return (
-    <LegalPage title="Privacy policy" intro="How AI Digital Prime handles the information you share when requesting a business audit or making an enquiry.">
+    <LegalPage title="Privacy policy" intro="How AI Digital Prime handles the information you share when requesting a business audit or applying to become an independent sales partner.">
       <h2>Who is responsible for your information</h2>
       <p>{siteConfig.brandName} is responsible for the personal information collected through this website. For privacy questions or requests, email <a href={"mailto:" + siteConfig.contactEmail}>{siteConfig.contactEmail}</a>.</p>
+
+      <h2>Independent sales partner applications</h2>
+      <p>When you apply to work with us as an independent sales partner, CALINESCU TECHNOLOGIES LTD (company number 17536696, 255 Arkwrights, Harlow, Essex CM20 3NE, United Kingdom) collects your first and last name, email address, phone number, town or city, languages and proficiency, a declaration about your right to work in the UK, and any experience or CV you choose to provide. Nationality is optional and should not be used as a substitute for checking permission to work. Please do not send identity documents at this stage.</p>
+      <p>We use application information to assess suitability, communicate about the opportunity, and take steps you request before potentially entering an independent contractor agreement. Depending on the activity and circumstances, our lawful bases are steps before entering into a contract and our legitimate interests in selecting business partners. We do not require consent as the lawful basis for assessing applications. We do not use these details to add you to unrelated marketing lists.</p>
+      <p>Application details and optional CVs are delivered to our restricted recruitment inbox using our email delivery provider. Access should be limited to people responsible for recruitment. Unsuccessful applications are ordinarily deleted after six months unless there is a documented reason to retain them longer, for example a legal claim; successful applicant details may be retained in the contractor relationship records as necessary. Please contact us to exercise your rights or ask about retention.</p>
 
       <h2>Information we collect</h2>
       <p>When you request a free business audit, we collect your name, business name and telephone number. We may also record the page your request came from and any information you later choose to share during a call or visit.</p>
@@ -30,7 +35,7 @@ export default function PrivacyPage() {
 
       <h2>Changes to this policy</h2>
       <p>We may update this notice when our services or the way this website works changes. The latest version will remain available on this page.</p>
-      <p className="legal-note">Last updated: 12 September 2026.</p>
+      <p className="legal-note">Last updated: 13 November 2026.</p>
     </LegalPage>
   );
 }
