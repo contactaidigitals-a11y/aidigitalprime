@@ -25,3 +25,15 @@
 .careers-page .careers-radio-option input{margin:0;accent-color:#a9efd6;flex:0 0 auto;width:17px;height:17px}
 .careers-page .careers-radio-option span{font-size:14px;line-height:1.45}
 @media(max-width:570px){.careers-page .careers-options{grid-template-columns:1fr}}
+
+/* Keep all form content inside the mobile viewport. */
+.careers-page, .careers-page *,.careers-page *::before,.careers-page *::after{box-sizing:border-box}
+.careers-page{width:100%;max-width:100%;overflow-x:clip}
+.careers-page>div,.careers-page section,.careers-page form,.careers-page form>div,.careers-page fieldset,.careers-page label{min-width:0;max-width:100%}
+.careers-page .careers-field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.careers-page form input:not([type="radio"]):not([type="checkbox"]),.careers-page form textarea{max-width:100%;min-width:0}
+.careers-page form textarea{display:block;resize:vertical}
+.careers-page form fieldset{width:100%;overflow-wrap:anywhere}
+.careers-page form legend{max-width:100%;white-space:normal}
+.careers-page form label span,.careers-page p{overflow-wrap:anywhere}
+@media(max-width:650px){.careers-page .careers-field-grid{grid-template-columns:minmax(0,1fr)}.careers-page fieldset{padding:14px!important}}
