@@ -37,7 +37,14 @@ export async function POST(request:Request) {
  const html='<h1>New sales partner application</h1>'+rows.map(([name,value])=>'<p><strong>'+escape(name)+':</strong> '+escape(value)+'</p>').join("");
  try{
   const result=await fetch("https://api.resend.com/emails",{method:"POST",signal:AbortSignal.timeout(15000),headers:{"Authorization":"Bearer "+apiKey,"Content-Type":"application/json"},body:JSON.stringify({from,to:[to],reply_to:email,subject:"Sales partner application — "+firstName+" "+lastName,html,text:rows.map(x=>x.join(": ")).join("\n"),...(attachments.length?{attachments}:{})})});
-  if(result.ok)return Response.json({ok:true});
+  if(result.ok){
+   // Send a separate acknowledgement; never expose an applicant's CV in this email.
+   const applicantHtml='<div style="font-family:Arial,sans-serif;max-width:620px;color:#17233a"><h2>Application received</h2><p>Hi '+escape(firstName)+',</p><p>Thank you for applying to become an Independent Sales Partner with AI Digital Prime (CALINESCU TECHNOLOGIES LTD).</p><p>We have received your application. Someone from our team will be in touch shortly about the next steps, which may include an AI-assisted introductory interview.</p><p>If you have any questions in the meantime, you can reach us at <a href="mailto:'+escape(siteConfig.contactEmail)+'">'+escape(siteConfig.contactEmail)+'</a>.</p><p>Kind regards,<br>AI Digital Prime Recruitment</p></div>';
+   try {
+    const ack=await fetch("https://api.resend.com/emails",{method:"POST",signal:AbortSignal.timeout(12000),headers:{"Authorization":"Bearer "+apiKey,"Content-Type":"application/json"},body:JSON.stringify({from,to:[email],reply_to:siteConfig.contactEmail,subject:"We received your application | AI Digital Prime",html:applicantHtml,text:"Hi "+firstName+",\n\nThank you for applying to become an Independent Sales Partner with AI Digital Prime (CALINESCU TECHNOLOGIES LTD).\n\nWe have received your application. Someone from our team will be in touch shortly about the next steps, which may include an AI-assisted introductory interview.\n\nQuestions? Email "+siteConfig.contactEmail+"\n\nAI Digital Prime Recruitment"})});
+    return Response.json({ok:true,acknowledgementSent:ack.ok});
+   } catch {return Response.json({ok:true,acknowledgementSent:false});}
+  }
  }catch{}
  return Response.json({message:"We could not deliver your application. Please try again later."},{status:502});
 }
