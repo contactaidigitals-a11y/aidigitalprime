@@ -29,7 +29,7 @@ export default function SalesAgentApplication() {
  function cvChanged(event:ChangeEvent<HTMLInputElement>) { setCvName(event.target.files?.[0]?.name||""); }
  return <main className="careers-page" style={{ minHeight:"100vh",background:"radial-gradient(ellipse at 85% 3%,#1c4c44 0%,#0b1c26 37%,#07131c 74%)",padding:"42px 20px 82px",color:"#f4f8f4",fontFamily:"DM Sans,system-ui,sans-serif" }}>
   <div style={{ maxWidth:850,margin:"0 auto" }}>
-   <Link href="/" className="careers-brand"><span className="careers-brand-mark">✳</span> AI DIGITAL<span>PRIME</span><small>← Back to home</small></Link>
+   <a href="https://aidigitalprime.co.uk/prime/index.html" className="careers-brand"><span className="careers-brand-mark">✳</span> AI DIGITAL<span>PRIME</span><small>← Back to home</small></a>
    <p className="careers-kicker">JOIN OUR NETWORK &nbsp; / &nbsp; CAREERS</p>
    <h1 style={{ fontFamily:"Space Grotesk,system-ui,sans-serif",fontSize:"clamp(38px,6vw,65px)",letterSpacing:"-.06em",lineHeight:1.05,margin:"10px 0 22px" }}>Make every connection <span style={{color:"#a9efd6"}}>count.</span></h1><h2 style={{fontFamily:"Space Grotesk,system-ui,sans-serif",fontSize:"clamp(19px,2.4vw,26px)",fontWeight:500,margin:"0 0 12px",color:"#e4f3eb"}}>Independent Sales Partner Application</h2>
    <p style={{ color:"#a8bfc0",fontSize:17,marginBottom:30,maxWidth:730 }}>Apply to collaborate with CALINESCU TECHNOLOGIES LTD, trading as AI Digital Prime. This is a self-employed, commission-only opportunity, not a salaried position. You can source your own clients and may receive optional lead suggestions.</p>
@@ -48,9 +48,9 @@ export default function SalesAgentApplication() {
      </div>
      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:16}}>
       <div><label style={labelStyle} htmlFor="city">Town / city where you live *</label><input style={inputStyle} id="city" name="city" required maxLength={100} autoComplete="address-level2"/></div>
-      <div><label style={labelStyle} htmlFor="nationality">Nationality (optional)</label><input style={inputStyle} id="nationality" name="nationality" maxLength={80} autoComplete="off"/><small style={{color:"#a8bbbc"}}>Not used to assess your eligibility.</small></div>
+      <div><label style={labelStyle} htmlFor="nationality">Nationality *</label><input style={inputStyle} id="nationality" name="nationality" required maxLength={80} autoComplete="off"/><small style={{color:"#a8bbbc"}}>Not used to assess your eligibility.</small></div>
      </div>
-     <div><label style={labelStyle} htmlFor="languages">Languages spoken and proficiency *</label><input style={inputStyle} id="languages" name="languages" required maxLength={250} placeholder="e.g. English (fluent), Romanian (native)"/></div>
+     <fieldset style={{border:"1px solid rgba(217,242,229,.2)",borderRadius:9,padding:"18px 20px"}}><legend style={{fontWeight:700}}>How would you rate your English? *</legend><div className="careers-options">{["Native","Fluent / professional","Intermediate / conversational","Basic"].map(option=><label key={option} className="careers-radio-option"><input type="radio" name="englishLevel" value={option} required/><span>{option}</span></label>)}</div></fieldset>
      <fieldset style={{border:"1px solid rgba(217,242,229,.2)",borderRadius:8,padding:16}}>
       <legend style={{fontWeight:700}}>Do you currently have the right to work in the UK? *</legend>
       <label style={{marginRight:24}}><input type="radio" name="rightToWork" value="Yes" required/> Yes</label>
