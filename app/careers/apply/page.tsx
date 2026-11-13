@@ -19,7 +19,7 @@ export default function SalesAgentApplication() {
    const response=await fetch("/api/careers/apply",{method:"POST",body:payload});
    const data=await response.json();
    if (!response.ok || !data.ok) throw new Error(data.message||"We could not send your application.");
-   setStatus("sent"); setMessage("Your application was submitted successfully. We will contact you if your profile is a match.");
+   setStatus("sent"); setMessage(data.acknowledgementSent ? "Application received. We have emailed your confirmation. Our team will be in touch shortly." : "Application received. Our team will be in touch shortly. We were unable to confirm delivery of the acknowledgement email.");
    form.reset(); setCvName("");
   } catch(error) {
    setStatus("error"); setMessage(error instanceof Error?error.message:"We could not send your application.");
@@ -32,6 +32,7 @@ export default function SalesAgentApplication() {
    <p style={{ color:"#2353b5",fontWeight:800,letterSpacing:".12em",textTransform:"uppercase",fontSize:12,marginTop:38 }}>Work with us</p>
    <h1 style={{ fontSize:"clamp(32px,5vw,52px)",letterSpacing:"-.045em",lineHeight:1.1,margin:"10px 0 12px" }}>Independent Sales Partner Application</h1>
    <p style={{ color:"#46546a",fontSize:17,marginBottom:30 }}>Apply to collaborate with CALINESCU TECHNOLOGIES LTD, trading as AI Digital Prime. This is a self-employed, commission-only opportunity, not a salaried position. You can source your own clients and may receive optional lead suggestions.</p>
+   <div style={{border:"1px solid #c6d6ec",background:"#eaf1fc",borderRadius:12,padding:"18px 22px",marginBottom:24}}><strong>What happens next?</strong><p style={{margin:"8px 0",color:"#364b68"}}>After your application, we will contact you about a short introductory interview with an AI agent. You can learn how our AI receptionists work, what you would be selling, and ask questions about the independent sales partner opportunity.</p><p style={{margin:"8px 0 0",color:"#364b68"}}>Questions for our team? Email <a style={{textDecoration:"underline",color:"#2353b5"}} href="mailto:contact.aidigitals@gmail.com">contact.aidigitals@gmail.com</a>.</p></div>
    <section style={panelStyle}>
     <h2 style={{marginTop:0,fontSize:24}}>Your application</h2>
     <p style={{color:"#68758a",fontSize:14}}>Fields marked * are required. No CV? You can still apply.</p>
