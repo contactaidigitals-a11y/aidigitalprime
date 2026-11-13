@@ -15,6 +15,15 @@ export default function PrivacyPage() {
       <p>We use application information to assess suitability, communicate about the opportunity, and take steps you request before potentially entering an independent contractor agreement. Depending on the activity and circumstances, our lawful bases are steps before entering into a contract and our legitimate interests in selecting business partners. We do not require consent as the lawful basis for assessing applications. We do not use these details to add you to unrelated marketing lists.</p>
       <p>Application details and optional CVs are delivered to our restricted recruitment inbox using our email delivery provider. Access should be limited to people responsible for recruitment. Unsuccessful applications are ordinarily deleted after six months unless there is a documented reason to retain them longer, for example a legal claim; successful applicant details may be retained in the contractor relationship records as necessary. Please contact us to exercise your rights or ask about retention.</p>
 
+      <h2>AI voice and website chat demonstrations</h2>
+      <p>Our site may process business information you enter into a personalised voice demo, plus microphone audio during your live session, through ElevenLabs. Questions typed into our website chatbot may be processed by an AI service provider to respond to your request. Do not enter passwords or sensitive personal information. AI responses can be inaccurate and demonstrations do not make real bookings. Provider processing, security logs and any international transfers must be assessed against deployed configurations and applicable safeguards. Voice recordings, monitoring and retention settings should be confirmed before any recruitment interviews are activated.</p>
+
+      <h2>Technical data and cookies</h2>
+      <p>Hosting services may process IP addresses, browser information and security logs to operate and protect the site. Google Fonts or other third-party resources may receive technical request information when they load. Non-essential analytics or advertising cookies must not be enabled without appropriate disclosure and consent.</p>
+
+      <h2>Automated recruitment interviews</h2>
+      <p>Where an optional AI introductory interview is offered, it will explain that it is an AI interaction and disclose any active human monitoring or recording before the call. The AI may describe the role and summarise answers for our team, but does not make final recruitment decisions. A person reviews candidate applications and decides whether to offer a contract.</p>
+
       <h2>Information we collect</h2>
       <p>When you request a free business audit, we collect your name, business name and telephone number. We may also record the page your request came from and any information you later choose to share during a call or visit.</p>
 
