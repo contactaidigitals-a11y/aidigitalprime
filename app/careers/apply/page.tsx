@@ -63,7 +63,7 @@ export default function SalesAgentApplication() {
      {message&&<p role="status" style={{padding:12,borderRadius:8,background:status==="sent"?"#e8f8ef":"#fff1f1",color:status==="sent"?"#155c3b":"#8a2222",margin:0}}>{message}</p>}
     </form>
    </section>
-   <p style={{fontSize:13,color:"#68758a",marginTop:24}}>CALINESCU TECHNOLOGIES LTD · Company no. 17536696 · 255 Arkwrights, Harlow, Essex CM20 3NE, United Kingdom. <Link href="/privacy" style={{textDecoration:"underline"}}>Privacy Policy</Link></p>
+   <p style={{fontSize:13,color:"#68758a",marginTop:24}}>CALINESCU TECHNOLOGIES LTD · Company no. 17536696. <Link href="/privacy" style={{textDecoration:"underline"}}>Privacy Policy</Link></p>
   </div>
  </main>;
 }
