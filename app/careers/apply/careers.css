@@ -18,3 +18,10 @@
 .careers-page button[type=submit]:hover:not(:disabled){transform:translateY(-2px);background:#c4f8e6!important}
 .careers-page a:hover{opacity:.86}
 @media(max-width:570px){.careers-page .careers-brand{font-size:15px}.careers-page .careers-brand small{width:100%;margin-left:52px}.careers-page .careers-kicker{margin-top:45px}}
+
+.careers-page .careers-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:9px}
+.careers-page .careers-radio-option{display:flex;align-items:center;gap:12px;min-height:52px;padding:12px 15px;border:1px solid rgba(217,242,229,.22);background:#102832;border-radius:9px;cursor:pointer;transition:border-color .2s,background .2s}
+.careers-page .careers-radio-option:hover,.careers-page .careers-radio-option:has(input:checked){border-color:#a9efd6;background:#153d37}
+.careers-page .careers-radio-option input{margin:0;accent-color:#a9efd6;flex:0 0 auto;width:17px;height:17px}
+.careers-page .careers-radio-option span{font-size:14px;line-height:1.45}
+@media(max-width:570px){.careers-page .careers-options{grid-template-columns:1fr}}
