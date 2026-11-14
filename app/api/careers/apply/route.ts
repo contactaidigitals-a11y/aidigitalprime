@@ -1,4 +1,6 @@
 import { siteConfig } from "../../../config";
+import { unzipSync, strFromU8 } from "fflate";
+import { extractText, getDocumentProxy } from "unpdf";
 
 const attempts=new Map<string,{count:number,reset:number}>();
 const escape=(s:string)=>s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]||c));
@@ -18,9 +20,10 @@ export async function POST(request:Request) {
  try{data=await request.formData();}catch{return Response.json({message:"Invalid application."},{status:400});}
  if(clean(data.get("website")))return Response.json({ok:true});
  const firstName=clean(data.get("firstName"),70),lastName=clean(data.get("lastName"),70),email=clean(data.get("email"),150),phone=clean(data.get("phone"),30),city=clean(data.get("city"),100),nationality=clean(data.get("nationality"),80),englishLevel=clean(data.get("englishLevel"),40),experience=clean(data.get("experience"),1500),rightToWork=clean(data.get("rightToWork"),3);
- if(!firstName||!lastName||!email||!phone||!city||!nationality||!["Native","Fluent / professional","Intermediate / conversational","Basic"].includes(englishLevel)||!["Yes","No"].includes(rightToWork)||clean(data.get("privacyAcknowledged"))!=="yes")return Response.json({message:"Please complete all required fields."},{status:400});
+ if(!firstName||!lastName||!email||!phone||!city||!nationality||!["Native","Fluent / professional","Intermediate / conversational","Basic"].includes(englishLevel)||!["Yes","No"].includes(rightToWork)||clean(data.get("privacyAcknowledged"))!=="yes"||clean(data.get("aiInterviewAcknowledged"))!=="yes")return Response.json({message:"Please complete all required fields."},{status:400});
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!/^[+0-9() .-]{7,30}$/.test(phone))return Response.json({message:"Enter a valid email address and phone number."},{status:400});
  const cv=data.get("cv");const attachments:Array<{filename:string,content:string}>=[];
+let cvText="",cvParseStatus="not_attached",cvFilename="",cvMime="";
  if(cv instanceof File&&cv.size>0){
   if(cv.size>2*1024*1024)return Response.json({message:"CV must be 2 MB or smaller."},{status:413});
   const ext=cv.name.toLowerCase().split(".").pop();
@@ -29,10 +32,45 @@ export async function POST(request:Request) {
   const isPdf=bytes.length>4&&bytes[0]===37&&bytes[1]===80&&bytes[2]===68&&bytes[3]===70&&bytes[4]===45;
   const isDocx=bytes.length>3&&bytes[0]===80&&bytes[1]===75&&bytes[2]===3&&bytes[3]===4;
   if((ext==="pdf"&&!isPdf)||(ext==="docx"&&!isDocx))return Response.json({message:"Invalid CV file."},{status:400});
+  cvFilename=cv.name.slice(0,130);cvMime=ext==="pdf"?"application/pdf":"application/vnd.openxmlformats-officedocument.wordprocessingml.document";
   attachments.push({filename:ext==="pdf"?"candidate-cv.pdf":"candidate-cv.docx",content:Buffer.from(bytes).toString("base64")});
+  cvParseStatus="failed";
+  try{
+   if(ext==="pdf"){
+    const doc=await Promise.race([getDocumentProxy(new Uint8Array(bytes),{maxImageSize:16777216}),new Promise<never>((_,reject)=>setTimeout(()=>reject(new Error("PDF timeout")),8000))]);
+    if(doc.numPages>15)throw new Error("PDF exceeds permitted page limit");
+    const result=await Promise.race([extractText(doc,{mergePages:true}),new Promise<never>((_,reject)=>setTimeout(()=>reject(new Error("Extraction timeout")),8000))]);
+    cvText=String(result.text||"").slice(0,12000);
+   }else{
+    const docs=unzipSync(bytes,{filter:file=>file.name==="word/document.xml"&&file.originalSize<=5*1024*1024});
+    const document=docs["word/document.xml"];
+    if(!document)throw new Error("DOCX document text not found");
+    const xml=strFromU8(document);
+    cvText=xml.replace(/<w:tab\b[^>]*\/>/g," ").replace(/<\/w:p\s*>/g,"\n").replace(/<[^>]*>/g,"")
+      .replace(/&(?:amp|lt|gt|quot|apos|#\d+|#x[\da-f]+);/gi,ch=>{
+        if(ch==="&amp;")return "&";if(ch==="&lt;")return "<";if(ch==="&gt;")return ">";
+        if(ch==="&quot;")return '"';if(ch==="&apos;")return "'";
+        const v=ch.slice(2,-1),n=v.toLowerCase().startsWith("x")?parseInt(v.slice(1),16):Number(v);
+        return Number.isFinite(n)&&n>0&&n<=0x10ffff?String.fromCodePoint(n):"";
+      }).slice(0,12000);
+   }
+   cvParseStatus=cvText.trim()?"extracted":"scanned_or_empty";
+  }catch{cvText="";cvParseStatus="failed";}
+
+ }
+ // Store each application in the protected Admin database before sending email notifications.
+ const applicantData={firstName,lastName,email,phone,city,nationality,englishLevel,experience,rightToWork,privacyAcknowledged:"yes",aiInterviewAcknowledged:"yes",
+  cv_filename:cvFilename,cv_mime:cvMime,cv_base64:attachments[0]?.content||"",cv_text:cvText,cv_parse_status:cvParseStatus};
+ try{
+  const response=await fetch("https://admin.aidigitalprime.co.uk/api/public/careers-apply",{
+   method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(applicantData),signal:AbortSignal.timeout(20000)});
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok||!result.ok)throw new Error("Application storage unavailable");
+ }catch{
+  return Response.json({message:"We could not securely save your application. Please try again."},{status:503});
  }
  const apiKey=process.env.RESEND_API_KEY,from=process.env.LEAD_FROM_EMAIL,to=process.env.CAREERS_TO_EMAIL||process.env.LEAD_TO_EMAIL||siteConfig.contactEmail;
- if(!apiKey||!from)return Response.json({message:"Applications are temporarily unavailable; your information has not been sent."},{status:503});
+ if(!apiKey||!from)return Response.json({ok:true,acknowledgementSent:false,notificationSent:false});
  const rows=[["First name",firstName],["Last name",lastName],["Email",email],["Phone",phone],["Town / city",city],["Nationality",nationality],["English proficiency",englishLevel],["Right to work in UK",rightToWork],["Sales experience",experience||"Not provided"],["Submitted (UTC)",new Date().toISOString()]];
  const html='<h1>New sales partner application</h1>'+rows.map(([name,value])=>'<p><strong>'+escape(name)+':</strong> '+escape(value)+'</p>').join("");
  try{
@@ -46,5 +84,5 @@ export async function POST(request:Request) {
    } catch {return Response.json({ok:true,acknowledgementSent:false});}
   }
  }catch{}
- return Response.json({message:"We could not deliver your application. Please try again later."},{status:502});
+ return Response.json({ok:true,acknowledgementSent:false,notificationSent:false});
 }
