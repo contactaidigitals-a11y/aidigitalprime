@@ -62,7 +62,7 @@ let cvText="",cvParseStatus="not_attached",cvFilename="",cvMime="";
  const applicantData={firstName,lastName,email,phone,city,nationality,englishLevel,experience,rightToWork,privacyAcknowledged:"yes",aiInterviewAcknowledged:"yes",
   cv_filename:cvFilename,cv_mime:cvMime,cv_base64:attachments[0]?.content||"",cv_text:cvText,cv_parse_status:cvParseStatus};
  try{
-  const response=await fetch("https://admin.aidigitalprime.co.uk/api/public/careers-apply",{
+  const response=await fetch("https://partners-admin-production.up.railway.app/api/public/careers-apply",{
    method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(applicantData),signal:AbortSignal.timeout(20000)});
   const result=await response.json().catch(()=>({}));
   if(!response.ok||!result.ok)throw new Error("Application storage unavailable");
