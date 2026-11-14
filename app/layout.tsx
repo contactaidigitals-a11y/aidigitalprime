@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { siteConfig } from "./config";
-import { WhatsAppLink } from "./components/WhatsAppLink";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://aidigitalprime.co.uk";
 
@@ -46,7 +45,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body>{children}<WhatsAppLink floating /></body>
+      <body>{children}</body>
     </html>
   );
 }
