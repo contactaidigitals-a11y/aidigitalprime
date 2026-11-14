@@ -1,6 +1,5 @@
 import { serviceLinks, siteConfig } from "../config";
 import { MobileNav } from "./MobileNav";
-import { WhatsAppLink } from "./WhatsAppLink";
 
 export function Brand() {
   return (
@@ -60,7 +59,6 @@ export function SiteFooter() {
         <span>Start with clarity</span>
         <p>Leave your details. We review your business, then call to arrange a suitable visit.</p>
         <a className="footer-call" href={siteConfig.auditUrl}>Request your free audit <span>↗</span></a>
-        <WhatsAppLink />
         <a className="footer-email" href={`mailto:${siteConfig.contactEmail}`}>{siteConfig.contactEmail}</a>
       </div>
       <div className="footer-bottom">
