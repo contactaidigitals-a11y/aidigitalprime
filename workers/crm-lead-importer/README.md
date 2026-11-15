@@ -1,17 +1,27 @@
-# Daily UK CRM lead importer
+# AI Digital Prime — overnight UK CRM sourcing
 
-Runs as an isolated Railway cron service in the AI Digital Prime project.
+This is the separate worker for `partners.aidigitalprime.co.uk` / Public CRM. It does not modify the website or agent login system.
 
-- Collects up to 100 new UK businesses per day across salons, tattoos, mechanics, dental practices and other appointment-based sectors.
-- Source: OpenStreetMap Overpass (data © OpenStreetMap contributors, licensed ODbL). Records source URLs and attribution.
-- Imports directly into partner_portal.leads in the existing PostgreSQL CRM.
-- New leads have status 'new' and no assigned agent. Never makes calls, sends messages or changes existing records.
-- Deduplicates by public business telephone, website, and company + address; also uses existing database unique constraints.
-- Only uses public business listings with a phone or website; details are explicitly marked unverified for sales staff.
-- Writes import counts and outcomes to partner_portal.crm_lead_import_runs.
-- 100 is a target, not a guarantee: missing data, provider outages and duplicates can reduce results. It never fabricates businesses.
+## UK delivery window
 
-Railway variables: DATABASE_URL (reference to existing Postgres service), LEADS_PER_DAY=100, DRY_RUN=0.
-Recommended cron: 0 9 * * * UTC.
+Railway cron (UTC): `0 0,2,4,6 * * *`. Runs at 00:00, 02:00, 04:00 and 06:00 UTC. The final run therefore starts at 06:00 GMT (winter) / 07:00 BST (summer), leaving a buffer before 09:00 England time.
 
-This branch is separate from main and does not change the live website.
+The worker uses `Europe/London` for daily batch identity and caps each run to ~70 minutes. All runs aim for a **combined daily target** of 100 NEW leads, never 100 per run. It locks the batch and counts inserted rows from PostgreSQL so retries cannot create duplicates.
+
+## Data quality
+
+- Searches real UK business listings from OpenStreetMap (Overpass), rotating regions and sectors.
+- Requires a public business phone **and** website.
+- Rejects closed/disused records, checks HTTPS site is reachable, and requires website/company identity or phone match.
+- Fetches one small public homepage with safe DNS checks and timeouts.
+- Captures available business name, phone, website, address, trade, opening hours, public business email, products/services, company number if recorded, and source links.
+- Stores the date and method of verification, OSM record date, and original sources in notes.
+- Saves records with `status=new`, `agent_id=NULL`; never updates or assigns existing leads.
+- No outbound calls, messages, emails, or assumptions of marketing consent. Agents must still check TPS/CTPS, objections, GDPR/PECR, and telephone accuracy before contacting leads.
+- A responding company website does **not** conclusively prove the physical premises is trading. Records are labelled `likely active`, not guaranteed active.
+
+The worker logs count / progress in `partner_portal.crm_lead_import_runs`. Provider failures, incomplete source coverage, TPS/CTPS screening not integrated, and inaccessible websites can result in fewer than 100 leads. No fabricated rows or placeholder contact details are inserted.
+
+Data © OpenStreetMap contributors (ODbL): https://www.openstreetmap.org/copyright
+
+Railway env: `DATABASE_URL=${{Postgres.DATABASE_URL}}`, `DRY_RUN=0`, `LEADS_PER_DAY=100`.
