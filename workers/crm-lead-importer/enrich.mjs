@@ -115,6 +115,8 @@ export async function enrich(row){
  const hours=String(t.opening_hours||"").slice(0,250);
  const desc=activityFromOSM(t,row.type);
  const social=[t["contact:instagram"]||t.instagram,t["contact:facebook"]||t.facebook].filter(Boolean).map(String).slice(0,2);
+ const companyNumber=String(t["ref:GB:companies_house"]||t["ref:GB:CompaniesHouse"]||"").trim().toUpperCase();
+ const validCompanyNumber=/^(?:[0-9]{8}|[A-Z]{2}[0-9]{6})$/.test(companyNumber)?companyNumber:"";
  const sources=[row.source,target,...social].join(" | ").slice(0,1300);
  const evidence=(phoneMatch?"Website reachable; listed phone also appears online.":"Website reachable; business name matches website title/content.");
  const notes=[
@@ -123,7 +125,8 @@ export async function enrich(row){
    "Sales team must screen TPS + CTPS, previous objections and check UK GDPR/PECR before marketing calls.",
    "OSM © OpenStreetMap contributors (ODbL): https://www.openstreetmap.org/copyright",
    t["check_date"]?"OSM last checked: "+String(t["check_date"]).slice(0,25):"",
+   row.osmTimestamp?"OSM last edited: "+String(row.osmTimestamp).slice(0,25):"",
    social.length?"Social: "+social.join(" ; "):""
  ].filter(Boolean).join("\n").slice(0,3000);
- return {...row,hours,email,description:desc,source:sources,notes,verifiedAt,confidence:phoneMatch?"website-phone-match":"website-name-match"};
+ return {...row,hours,email,companyNumber:validCompanyNumber,description:desc,source:sources,notes,verifiedAt,confidence:phoneMatch?"website-phone-match":"website-name-match"};
 }
