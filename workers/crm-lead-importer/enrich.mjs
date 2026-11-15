@@ -68,7 +68,8 @@ async function page(url,depth=0){
  if(!parsed)return null;
  const ips=await lookup(parsed.hostname,{all:true}).catch(()=>[]);
  if(!ips.length||ips.some(x=>!globalIp(x.address)))return null;
- const result=await request(parsed,ips[0],depth);
+ const selected=ips.find(x=>x.family===4)||ips[0];
+ const result=await request(parsed,selected,depth);
  if(!result)return null;
  if(result.redirect){
   const next=new URL(result.redirect,parsed);
@@ -98,7 +99,7 @@ export async function enrich(row){
  if(closure||t.access==="no"||t.opening_hours==="closed"||t["operational_status"]==="closed")return null;
  const target="https://"+row.website;
  const result=await page(target);
- if(!result||result.status<200||result.status>=300||!result.html)return null;
+ if(!result||result.status<200||result.status>=300||!result.html){if(process.env.DIAGNOSTIC_ENRICH==="1")console.log("WEBSITE_REJECT inaccessible "+target);return null;}
  const title=(result.html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)||[])[1]||"";
  const plain=strip(result.html).slice(0,25000).toLowerCase();
  const tokens=words(row.name);
@@ -109,7 +110,7 @@ export async function enrich(row){
  const nameMatch=tokens.length>0 && count >= Math.min(2,tokens.length);
  const titleMatch=tokens.some(token=>titleText.includes(token));
  // Reject generic or unrelated websites rather than marking them as active.
- if(!phoneMatch && !(nameMatch&&titleMatch))return null;
+ if(!phoneMatch && !(nameMatch&&titleMatch)){if(process.env.DIAGNOSTIC_ENRICH==="1")console.log("WEBSITE_REJECT identity "+row.name+" "+target);return null;}
  const verifiedAt=new Date().toISOString();
  const email=firstPublicEmail(t["contact:email"]||t.email)||htmlEmail(result.html);
  const hours=String(t.opening_hours||"").slice(0,250);
