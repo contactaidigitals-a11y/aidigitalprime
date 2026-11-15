@@ -91,7 +91,7 @@ function ql(region){
   parts.push('nwr["office"="estate_agent"]["name"]('+box+');');
   parts.push('nwr["tourism"~"^(hotel|guest_house)$"]["name"]('+box+');');
  }
- return "[out:json][timeout:40];("+parts.join("")+");out center tags meta;";
+ return "[out:json][timeout:40];("+parts.join("")+");out center meta;";
 }
 async function fetchRegion(region){
  const body=new URLSearchParams({data:ql(region)});
@@ -177,8 +177,9 @@ try{
      if(!details)continue;
      verified++;
      if(DRY_RUN){if(verified<=5)console.log("VERIFIED PREVIEW "+JSON.stringify({...details,tags:undefined}).slice(0,900));continue;}
-     if(await insertLead(client,details,today))created++;
-     if(created>0&&created%20===0){
+     const saved=await insertLead(client,details,today);
+     if(saved)created++;
+     if(saved&&created%20===0){
       await client.query("INSERT INTO partner_portal.crm_lead_import_runs(run_date,created_count,candidate_count,attempted_count,status,detail) VALUES ($1,$2,$3,$4,'running','') ON CONFLICT(run_date) DO UPDATE SET created_count=$2,candidate_count=crm_lead_import_runs.candidate_count+$3,attempted_count=crm_lead_import_runs.attempted_count+$4,status='running',updated_at=now()",[today,created,seen,attempted]);
      }
     }catch(e){errors.push(String(e).slice(0,180));}
