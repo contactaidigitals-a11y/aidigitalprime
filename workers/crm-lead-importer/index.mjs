@@ -94,7 +94,7 @@ function ql(region){
 }
 async function fetchRegion(region){
  const body=new URLSearchParams({data:ql(region)});
- for(const endpoint of ["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter"]){
+ for(const endpoint of ["https://overpass.private.coffee/api/interpreter","https://overpass-api.de/api/interpreter"]){
   try{
    const response=await fetch(endpoint,{method:"POST",body,headers:{"Accept":"application/json","User-Agent":"AIDigitalPrimeProspecting/1.0 (https://aidigitalprime.co.uk)"},signal:AbortSignal.timeout(75000)});
    if(!response.ok)throw Error("HTTP "+response.status);
