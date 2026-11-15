@@ -1,6 +1,7 @@
 import pg from "pg";
 import { randomUUID } from "node:crypto";
 import { enrich } from "./enrich.mjs";
+import { rejectLocalBusiness, sharedWebsiteCount, hostOf } from "./local-business.mjs";
 
 // Daily, no-contact prospect research worker for AI Digital Prime Public CRM.
 // No automated phone calls or marketing messages, no agent assignment.
@@ -114,8 +115,15 @@ function candidates(elements,region){
   const website=site(t.website||t["contact:website"]);
   if(!name||!type||!phone||!website||t.disused==="yes"||t.abandoned==="yes"||t["disused:shop"]||t["disused:amenity"])continue;
   if(!groups.has(type))groups.set(type,[]);
-  groups.get(type).push({name,type,phone,website,address:postal(t,nearby(el,region)),source:"https://www.openstreetmap.org/"+el.type+"/"+el.id,tags:t,osmTimestamp:el.timestamp||""});
+  const row={name,type,phone,website,address:postal(t,nearby(el,region)),source:"https://www.openstreetmap.org/"+el.type+"/"+el.id,tags:t,osmTimestamp:el.timestamp||""};
+  if(rejectLocalBusiness(row))continue;
+  groups.get(type).push(row);
  }
+ const allRows=[...groups.values()].flat();
+ const counts=sharedWebsiteCount(allRows);
+ // Three or more premises sharing one company website are unlikely to be
+ // the independent local businesses requested. Even small chains are excluded.
+ for(const [industry,rows] of groups){groups.set(industry,rows.filter(row=>(counts.get(hostOf(row.website))||0)<=2));}
  const keys=[...groups.keys()].sort(),all=[];
  for(const g of groups.values())g.sort((a,b)=>Number(Boolean(b.phone))-Number(Boolean(a.phone)));
  let any=true;
