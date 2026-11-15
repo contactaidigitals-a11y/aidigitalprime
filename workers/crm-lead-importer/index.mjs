@@ -1,5 +1,6 @@
 import pg from "pg";
 import { randomUUID } from "node:crypto";
+import { enrich } from "./enrich.mjs";
 
 // Daily, no-contact prospect research worker for AI Digital Prime Public CRM.
 // No automated phone calls or marketing messages, no agent assignment.
@@ -90,7 +91,7 @@ function ql(region){
   parts.push('nwr["office"="estate_agent"]["name"]('+box+');');
   parts.push('nwr["tourism"~"^(hotel|guest_house)$"]["name"]('+box+');');
  }
- return "[out:json][timeout:40];("+parts.join("")+");out center tags;";
+ return "[out:json][timeout:40];("+parts.join("")+");out center tags meta;";
 }
 async function fetchRegion(region){
  const body=new URLSearchParams({data:ql(region)});
@@ -111,9 +112,9 @@ function candidates(elements,region){
   const t=el.tags||{},name=String(t.name||"").trim().slice(0,200),type=sector(t);
   const phone=number(t.phone||t["contact:phone"]);
   const website=site(t.website||t["contact:website"]);
-  if(!name||!type||(!phone&&!website)||t.disused==="yes"||t.abandoned==="yes"||t["disused:shop"]||t["disused:amenity"])continue;
+  if(!name||!type||!phone||!website||t.disused==="yes"||t.abandoned==="yes"||t["disused:shop"]||t["disused:amenity"])continue;
   if(!groups.has(type))groups.set(type,[]);
-  groups.get(type).push({name,type,phone,website,address:postal(t,nearby(el,region)),source:"https://www.openstreetmap.org/"+el.type+"/"+el.id});
+  groups.get(type).push({name,type,phone,website,address:postal(t,nearby(el,region)),source:"https://www.openstreetmap.org/"+el.type+"/"+el.id,tags:t,osmTimestamp:el.timestamp||""});
  }
  const keys=[...groups.keys()].sort(),all=[];
  for(const g of groups.values())g.sort((a,b)=>Number(Boolean(b.phone))-Number(Boolean(a.phone)));
@@ -121,51 +122,77 @@ function candidates(elements,region){
  while(any){any=false;for(const k of keys){const a=groups.get(k).shift();if(a){all.push(a);any=true;}}}
  return all;
 }
-async function insertLead(client,row){
+async function insertLead(client,row,day){
  const sql=[
-  "INSERT INTO partner_portal.leads (id,company,phone,website,industry,address,notes,activity_description,research_source,status,created)",
-  "SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,'new',now()",
+  "INSERT INTO partner_portal.leads (id,company,phone,website,industry,address,business_hours,notes,activity_description,products_services,contact_email,research_source,status,created)",
+  "SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'new',now()",
   "WHERE NOT EXISTS (SELECT 1 FROM partner_portal.leads x WHERE",
   "($3::text IS NOT NULL AND x.phone=$3) OR",
   "($4::text IS NOT NULL AND regexp_replace(lower(coalesce(x.website,'')), '^(https?://)?(www[.])?', '')=$4) OR",
   "(lower(trim(x.company))=lower(trim($2)) AND lower(trim(coalesce(x.address,'')))=lower(trim($6))))",
   "ON CONFLICT DO NOTHING RETURNING id"
  ].join(" ");
- const note="UNVERIFIED directory data: check business details and TPS/CTPS, UK GDPR and marketing eligibility before calling. Data © OpenStreetMap contributors, ODbL https://www.openstreetmap.org/copyright";
- const values=[randomUUID(),row.name,row.phone,row.website,row.type,row.address,note,"OSM-listed "+row.type.toLowerCase()+" business.","OpenStreetMap ODbL "+row.source];
+ const source="daily-leads:"+day+" | "+row.source;
+ const values=[
+  randomUUID(),row.name,row.phone,row.website,row.type,row.address,row.hours,row.notes,
+  row.description,row.description,row.email,source
+ ];
  const result=await client.query(sql,values);
  return result.rowCount===1;
 }
+function londonDay(){
+ const parts=new Intl.DateTimeFormat("en-GB",{
+  timeZone:"Europe/London",year:"numeric",month:"2-digit",day:"2-digit"
+ }).formatToParts(new Date());
+ const obj=Object.fromEntries(parts.map(x=>[x.type,x.value]));
+ return obj.year+"-"+obj.month+"-"+obj.day;
+}
+
 const client=new pg.Client({connectionString:process.env.DATABASE_URL,connectionTimeoutMillis:15000,query_timeout:20000});
-const today=new Date().toISOString().slice(0,10),seed=Math.floor(Date.now()/86400000);
-let created=0,attempted=0,seen=0,errors=[];
+const today=londonDay(),seed=Math.floor(new Date(today+"T00:00:00Z").getTime()/86400000);
+let created=0,attempted=0,seen=0,verified=0,errors=[],locked=false;
 try{
  await client.connect();
- await client.query("CREATE TABLE IF NOT EXISTS partner_portal.crm_lead_import_runs (run_date date primary key, created_count integer not null default 0, candidate_count integer not null default 0, attempted_count integer not null default 0, status text not null default 'started', detail text not null default '', updated_at timestamptz not null default now())");
- if(!DRY_RUN){
-  const prev=await client.query("SELECT created_count,status FROM partner_portal.crm_lead_import_runs WHERE run_date=$1",[today]);
-  created=prev.rows[0]?.status==="complete"?TARGET:(prev.rows[0]?.created_count||0);
- }
- for(let group=0;group<7&&created<TARGET;group++){
-  const first=(seed*7+group*2)%CITIES.length;
-  const regions=[CITIES[first],CITIES[(first+Math.floor(CITIES.length/2))%CITIES.length]];
-  const raw=await fetchRegion(regions);
-  seen+=raw.length;
-  const leads=candidates(raw,regions);
-  console.log("UK areas: "+regions.map(v=>v[0]).join(", ")+"; candidates "+leads.length);
-  for(const row of leads){
-   if(created>=TARGET)break;
-   attempted++;
-   if(DRY_RUN){if(attempted<10)console.log("DRY RUN "+JSON.stringify(row));continue;}
-   try{if(await insertLead(client,row))created++;}
-   catch(e){errors.push(String(e).slice(0,180));}
+ const lock=await client.query("SELECT pg_try_advisory_lock(hashtext($1)) AS acquired",["aidp:overnight-crm:"+today]);
+ locked=Boolean(lock.rows[0]?.acquired);
+ if(!locked){console.log("Another overnight import is already running for "+today);process.exitCode=0;}
+ else {
+  await client.query("CREATE TABLE IF NOT EXISTS partner_portal.crm_lead_import_runs (run_date date primary key, created_count integer not null default 0, candidate_count integer not null default 0, attempted_count integer not null default 0, status text not null default 'started', detail text not null default '', updated_at timestamptz not null default now())");
+  if(!DRY_RUN){
+   const count=await client.query("SELECT count(*)::int AS n FROM partner_portal.leads WHERE research_source LIKE $1",["daily-leads:"+today+" | %"]);
+   created=count.rows[0]?.n||0;
   }
-  if(DRY_RUN)break;
+  for(let group=0;group<10&&created<TARGET;group++){
+   const first=(seed*7+group*3)%CITIES.length;
+   const regions=[CITIES[first],CITIES[(first+Math.floor(CITIES.length/2))%CITIES.length]];
+   const raw=await fetchRegion(regions);
+   seen+=raw.length;
+   const leads=candidates(raw,regions);
+   console.log("UK areas: "+regions.map(v=>v[0]).join(", ")+"; researched candidates "+leads.length);
+   for(const row of leads){
+    if(created>=TARGET||DRY_RUN&&verified>=10)break;
+    attempted++;
+    try{
+     const details=await enrich(row);
+     if(!details)continue;
+     verified++;
+     if(DRY_RUN){if(verified<=5)console.log("VERIFIED PREVIEW "+JSON.stringify({...details,tags:undefined}).slice(0,900));continue;}
+     if(await insertLead(client,details,today))created++;
+     if(created>0&&created%20===0){
+      await client.query("INSERT INTO partner_portal.crm_lead_import_runs(run_date,created_count,candidate_count,attempted_count,status,detail) VALUES ($1,$2,$3,$4,'running','') ON CONFLICT(run_date) DO UPDATE SET created_count=$2,candidate_count=crm_lead_import_runs.candidate_count+$3,attempted_count=crm_lead_import_runs.attempted_count+$4,status='running',updated_at=now()",[today,created,seen,attempted]);
+     }
+    }catch(e){errors.push(String(e).slice(0,180));}
+   }
+   if(DRY_RUN)break;
+  }
+  if(!DRY_RUN){
+   await client.query("INSERT INTO partner_portal.crm_lead_import_runs(run_date,created_count,candidate_count,attempted_count,status,detail) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT(run_date) DO UPDATE SET created_count=$2,candidate_count=$3,attempted_count=$4,status=$5,detail=$6,updated_at=now()",[today,created,seen,attempted,created>=TARGET?"complete":"partial",errors.slice(0,6).join(" | ")]);
+  }
+  console.log(JSON.stringify({ukDate:today,target:TARGET,created,attempted,seen,verified,dryRun:DRY_RUN,errors:errors.slice(0,6)}));
+  if(!DRY_RUN&&created<TARGET)process.exitCode=2;
  }
- if(!DRY_RUN){
-  await client.query("INSERT INTO partner_portal.crm_lead_import_runs(run_date,created_count,candidate_count,attempted_count,status,detail) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT(run_date) DO UPDATE SET created_count=$2,candidate_count=crm_lead_import_runs.candidate_count+$3,attempted_count=crm_lead_import_runs.attempted_count+$4,status=$5,detail=$6,updated_at=now()",[today,created,seen,attempted,created===TARGET?"complete":"partial",errors.slice(0,6).join(" | ")]);
- }
- console.log(JSON.stringify({date:today,requested:TARGET,created,attempted,seen,dryRun:DRY_RUN,errors:errors.slice(0,6)}));
- if(!DRY_RUN&&created<TARGET)process.exitCode=2;
-}catch(e){console.error("Daily import failed: "+String(e));process.exitCode=1;}
-finally{await client.end().catch(()=>{});}
+}catch(e){console.error("Overnight importer failed: "+String(e));process.exitCode=1;}
+finally{
+ if(locked)await client.query("SELECT pg_advisory_unlock(hashtext($1))",["aidp:overnight-crm:"+today]).catch(()=>{});
+ await client.end().catch(()=>{});
+}
