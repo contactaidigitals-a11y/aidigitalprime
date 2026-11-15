@@ -170,20 +170,28 @@ try{
    seen+=raw.length;
    const leads=candidates(raw,regions);
    console.log("UK areas: "+regions.map(v=>v[0]).join(", ")+"; researched candidates "+leads.length);
-   for(const row of leads){
+   // Verify six independent business websites concurrently. Keep database
+   // writes serial to respect duplicate prevention and the exact daily cap.
+   for(let offset=0;offset<leads.length;offset+=6){
     if(created>=TARGET||Date.now()>=deadline||DRY_RUN&&verified>=10)break;
-    attempted++;
-    try{
-     const details=await enrich(row);
+    const slice=leads.slice(offset,offset+6);
+    const checked=await Promise.all(slice.map(async row=>{
+     try{return await enrich(row);}catch(e){errors.push(String(e).slice(0,180));return null;}
+    }));
+    for(const details of checked){
+     if(created>=TARGET||Date.now()>=deadline||DRY_RUN&&verified>=10)break;
+     attempted++;
      if(!details)continue;
      verified++;
      if(DRY_RUN){if(verified<=5)console.log("VERIFIED PREVIEW "+JSON.stringify({...details,tags:undefined}).slice(0,900));continue;}
-     const saved=await insertLead(client,details,today);
-     if(saved)created++;
-     if(saved&&created%20===0){
-      await client.query("INSERT INTO partner_portal.crm_lead_import_runs(run_date,created_count,candidate_count,attempted_count,status,detail) VALUES ($1,$2,$3,$4,'running','') ON CONFLICT(run_date) DO UPDATE SET created_count=$2,candidate_count=crm_lead_import_runs.candidate_count+$3,attempted_count=crm_lead_import_runs.attempted_count+$4,status='running',updated_at=now()",[today,created,seen,attempted]);
-     }
-    }catch(e){errors.push(String(e).slice(0,180));}
+     try{
+      const saved=await insertLead(client,details,today);
+      if(saved)created++;
+      if(saved&&created%20===0){
+       await client.query("INSERT INTO partner_portal.crm_lead_import_runs(run_date,created_count,candidate_count,attempted_count,status,detail) VALUES ($1,$2,$3,$4,'running','') ON CONFLICT(run_date) DO UPDATE SET created_count=$2,candidate_count=crm_lead_import_runs.candidate_count+$3,attempted_count=crm_lead_import_runs.attempted_count+$4,status='running',updated_at=now()",[today,created,seen,attempted]);
+      }
+     }catch(e){errors.push(String(e).slice(0,180));}
+    }
    }
    if(DRY_RUN)break;
   }
