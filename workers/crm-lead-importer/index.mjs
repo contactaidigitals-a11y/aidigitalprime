@@ -132,8 +132,8 @@ function candidates(elements,region){
 }
 async function insertLead(client,row,day){
  const sql=[
-  "INSERT INTO partner_portal.leads (id,company,phone,website,industry,address,business_hours,notes,activity_description,products_services,contact_email,company_number,research_source,status,created)",
-  "SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'new',now()",
+  "INSERT INTO partner_portal.leads (id,company,phone,website,industry,address,business_hours,notes,activity_description,products_services,contact_email,company_number,company_size,research_source,status,created)",
+  "SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'new',now()",
   "WHERE NOT EXISTS (SELECT 1 FROM partner_portal.leads x WHERE",
   "($3::text IS NOT NULL AND x.phone=$3) OR",
   "($4::text IS NOT NULL AND regexp_replace(lower(coalesce(x.website,'')), '^(https?://)?(www[.])?', '')=$4) OR",
@@ -143,7 +143,7 @@ async function insertLead(client,row,day){
  const source="daily-leads:"+day+" | "+row.source;
  const values=[
   randomUUID(),row.name,row.phone,row.website,row.type,row.address,row.hours,row.notes,
-  row.description,row.description,row.email,row.companyNumber||'',source
+  row.description,row.description,row.email,row.companyNumber||'',row.companySize,source
  ];
  const result=await client.query(sql,values);
  return result.rowCount===1;
