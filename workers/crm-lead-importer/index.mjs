@@ -124,8 +124,8 @@ function candidates(elements,region){
 }
 async function insertLead(client,row,day){
  const sql=[
-  "INSERT INTO partner_portal.leads (id,company,phone,website,industry,address,business_hours,notes,activity_description,products_services,contact_email,research_source,status,created)",
-  "SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'new',now()",
+  "INSERT INTO partner_portal.leads (id,company,phone,website,industry,address,business_hours,notes,activity_description,products_services,contact_email,company_number,research_source,status,created)",
+  "SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'new',now()",
   "WHERE NOT EXISTS (SELECT 1 FROM partner_portal.leads x WHERE",
   "($3::text IS NOT NULL AND x.phone=$3) OR",
   "($4::text IS NOT NULL AND regexp_replace(lower(coalesce(x.website,'')), '^(https?://)?(www[.])?', '')=$4) OR",
@@ -135,7 +135,7 @@ async function insertLead(client,row,day){
  const source="daily-leads:"+day+" | "+row.source;
  const values=[
   randomUUID(),row.name,row.phone,row.website,row.type,row.address,row.hours,row.notes,
-  row.description,row.description,row.email,source
+  row.description,row.description,row.email,row.companyNumber||'',source
  ];
  const result=await client.query(sql,values);
  return result.rowCount===1;
@@ -151,6 +151,7 @@ function londonDay(){
 const client=new pg.Client({connectionString:process.env.DATABASE_URL,connectionTimeoutMillis:15000,query_timeout:20000});
 const today=londonDay(),seed=Math.floor(new Date(today+"T00:00:00Z").getTime()/86400000);
 let created=0,attempted=0,seen=0,verified=0,errors=[],locked=false;
+const deadline=Date.now()+70*60_000;
 try{
  await client.connect();
  const lock=await client.query("SELECT pg_try_advisory_lock(hashtext($1)) AS acquired",["aidp:overnight-crm:"+today]);
@@ -162,7 +163,7 @@ try{
    const count=await client.query("SELECT count(*)::int AS n FROM partner_portal.leads WHERE research_source LIKE $1",["daily-leads:"+today+" | %"]);
    created=count.rows[0]?.n||0;
   }
-  for(let group=0;group<10&&created<TARGET;group++){
+  for(let group=0;group<10&&created<TARGET&&Date.now()<deadline;group++){
    const first=(seed*7+group*3)%CITIES.length;
    const regions=[CITIES[first],CITIES[(first+Math.floor(CITIES.length/2))%CITIES.length]];
    const raw=await fetchRegion(regions);
@@ -170,7 +171,7 @@ try{
    const leads=candidates(raw,regions);
    console.log("UK areas: "+regions.map(v=>v[0]).join(", ")+"; researched candidates "+leads.length);
    for(const row of leads){
-    if(created>=TARGET||DRY_RUN&&verified>=10)break;
+    if(created>=TARGET||Date.now()>=deadline||DRY_RUN&&verified>=10)break;
     attempted++;
     try{
      const details=await enrich(row);
