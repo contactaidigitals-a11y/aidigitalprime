@@ -1,6 +1,7 @@
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
 import https from "node:https";
+import { rejectLocalBusiness, rejectCorporateWebsite } from "./local-business.mjs";
 
 // One bounded HTTPS GET per public business website. DNS addresses are checked
 // and pinned per request to avoid fetching internal addresses from OSM URLs.
@@ -95,11 +96,14 @@ function activityFromOSM(tags,industry){
 export async function enrich(row){
  const t=row.tags||{};
  if(!row.phone || !row.website)return null; // callable leads, not just directories
+ if(rejectLocalBusiness(row))return null;
  const closure=Object.entries(t).some(([k,v])=>/^(disused|abandoned|demolished|was:|closed:|construction:)/.test(k)&&v || String(v).toLowerCase()==="permanently closed");
  if(closure||t.access==="no"||t.opening_hours==="closed"||t["operational_status"]==="closed")return null;
  const target="https://"+row.website;
  const result=await page(target);
  if(!result||result.status<200||result.status>=300||!result.html){if(process.env.DIAGNOSTIC_ENRICH==="1")console.log("WEBSITE_REJECT inaccessible "+target);return null;}
+ const chainEvidence=rejectCorporateWebsite(result.html);
+ if(chainEvidence){if(process.env.DIAGNOSTIC_ENRICH==="1")console.log("CHAIN_REJECT "+row.name+" "+chainEvidence);return null;}
  const title=(result.html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)||[])[1]||"";
  const plain=strip(result.html).slice(0,25000).toLowerCase();
  const tokens=words(row.name);
@@ -122,6 +126,7 @@ export async function enrich(row){
  const evidence=(phoneMatch?"Website reachable; listed phone also appears online.":"Website reachable; business name matches website title/content.");
  const notes=[
    "RESEARCHED "+verifiedAt.slice(0,16)+" UK. Likely active — "+evidence,
+   "LOCAL BUSINESS FILTER: no identifiable large-brand/network tags or obvious chain evidence; ownership and employee count NOT independently verified.",
    "This is not proof the premises is open or the phone line works.",
    "Sales team must screen TPS + CTPS, previous objections and check UK GDPR/PECR before marketing calls.",
    "OSM © OpenStreetMap contributors (ODbL): https://www.openstreetmap.org/copyright",
@@ -129,5 +134,5 @@ export async function enrich(row){
    row.osmTimestamp?"OSM last edited: "+String(row.osmTimestamp).slice(0,25):"",
    social.length?"Social: "+social.join(" ; "):""
  ].filter(Boolean).join("\n").slice(0,3000);
- return {...row,hours,email,companyNumber:validCompanyNumber,description:desc,source:sources,notes,verifiedAt,confidence:phoneMatch?"website-phone-match":"website-name-match"};
+ return {...row,hours,email,companyNumber:validCompanyNumber,companySize:"Local small business (unverified)",description:desc,source:sources,notes,verifiedAt,confidence:phoneMatch?"website-phone-match":"website-name-match"};
 }
