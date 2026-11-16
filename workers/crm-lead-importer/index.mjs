@@ -195,11 +195,11 @@ try{
      if(DRY_RUN){if(verified<=5)console.log("VERIFIED PREVIEW "+JSON.stringify({...details,tags:undefined}).slice(0,900));continue;}
      try{
       const saved=await insertLead(client,details,today);
-      if(saved)created++;
+      if(saved){created++;if(created===1||created%10===0)console.log("CRM_INSERT_PROGRESS "+JSON.stringify({ukDate:today,inserted:created,target:TARGET}));}
       if(saved&&created%20===0){
        await client.query("INSERT INTO partner_portal.crm_lead_import_runs(run_date,created_count,candidate_count,attempted_count,status,detail) VALUES ($1,$2,$3,$4,'running','') ON CONFLICT(run_date) DO UPDATE SET created_count=$2,candidate_count=crm_lead_import_runs.candidate_count+$3,attempted_count=crm_lead_import_runs.attempted_count+$4,status='running',updated_at=now()",[today,created,seen,attempted]);
       }
-     }catch(e){errors.push(String(e).slice(0,180));}
+     }catch(e){if(errors.length<5)console.error("CRM_INSERT_ERROR "+String(e).slice(0,250));errors.push(String(e).slice(0,180));}
     }
    }
    if(DRY_RUN)break;
