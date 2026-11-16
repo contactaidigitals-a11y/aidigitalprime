@@ -11,6 +11,7 @@ export default function SalesAgentApplication() {
  const [status,setStatus]=useState<"idle"|"sending"|"sent"|"error">("idle");
  const [message,setMessage]=useState("");
  const [cvName,setCvName]=useState("");
+ const [interviewDate,setInterviewDate]=useState("");
  async function submit(event: FormEvent<HTMLFormElement>) {
   event.preventDefault();
   const form=event.currentTarget;
@@ -21,7 +22,7 @@ export default function SalesAgentApplication() {
    const data=await response.json();
    if (!response.ok || !data.ok) throw new Error(data.message||"We could not send your application.");
    setStatus("sent"); setMessage(data.acknowledgementSent ? "Application received. We have emailed your confirmation. Our team will be in touch shortly." : "Application received. Our team will be in touch shortly. We were unable to confirm delivery of the acknowledgement email.");
-   form.reset(); setCvName("");
+   form.reset(); setCvName(""); setInterviewDate("");
   } catch(error) {
    setStatus("error"); setMessage(error instanceof Error?error.message:"We could not send your application.");
   }
@@ -57,6 +58,7 @@ export default function SalesAgentApplication() {
       <label><input type="radio" name="rightToWork" value="No" required/> No</label>
       <p style={{fontSize:13,color:"#a8bbbc",marginBottom:0}}>Please do not upload passports, visas or identity documents at this stage.</p>
      </fieldset>
+     <div><label style={labelStyle} htmlFor="interviewDate">When would you like to receive your AI interview call? *</label><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:12}}><input style={inputStyle} id="interviewDate" name="interviewDate" type="date" required min={new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/London",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date())} value={interviewDate} onChange={event=>setInterviewDate(event.target.value)}/><input style={inputStyle} id="interviewTime" name="interviewTime" type="time" required step={900}/></div><small style={{color:"#a8bbbc"}}>Choose your preferred date and time (UK time). Our recruitment team will call you manually at the selected time.</small></div>
      <div><label style={labelStyle} htmlFor="experience">Sales experience (optional)</label><textarea style={{...inputStyle,minHeight:94}} id="experience" name="experience" maxLength={1500} placeholder="Tell us briefly about relevant experience."/></div>
      <div><label style={labelStyle} htmlFor="cv">CV / résumé (optional, PDF or DOCX, max 2 MB)</label><input id="cv" name="cv" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={cvChanged}/>{cvName&&<p style={{fontSize:13,color:"#bcd0c8"}}>Selected: {cvName}</p>}</div>
      <div style={{position:"absolute",left:"-10000px"}} aria-hidden="true"><label htmlFor="website">Leave this empty</label><input type="text" name="website" id="website" tabIndex={-1} autoComplete="off"/></div>
