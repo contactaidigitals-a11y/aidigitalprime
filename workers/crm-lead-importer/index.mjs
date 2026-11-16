@@ -7,6 +7,7 @@ import { rejectLocalBusiness, sharedWebsiteCount, hostOf } from "./local-busines
 // No automated phone calls or marketing messages, no agent assignment.
 const TARGET=Math.min(300,Math.max(1,Number(process.env.LEADS_PER_DAY)||150));
 const REVIEW_TARGET=Math.min(5000,Math.max(TARGET,Number(process.env.REVIEW_PER_DAY)||1000));
+const MAX_REVIEW_TARGET=Math.max(REVIEW_TARGET,Math.min(5000,REVIEW_TARGET*3));
 const CONCURRENCY=12;
 const DRY_RUN=process.env.DRY_RUN==="1";
 const DIAG_LIMIT=DRY_RUN?Math.max(1,Number(process.env.DIAGNOSTIC_MAX_ATTEMPTS)||Infinity):Infinity;
@@ -216,13 +217,15 @@ try{
    const known={phones:new Set(),hosts:new Set(),names:new Set()};
    const existing=await client.query("SELECT company,phone,website,address FROM partner_portal.leads");
    for(const row of existing.rows)registerKnown(known,row);
-   const stage=await client.query("SELECT source_id,phone,website_host FROM partner_portal.crm_lead_import_candidates WHERE run_date=$1",[today]);
+   const stage=await client.query("SELECT source_id,phone,website_host,result FROM partner_portal.crm_lead_import_candidates WHERE run_date=$1",[today]);
    const seenIds=new Set(stage.rows.map(r=>r.source_id));
    const seenPhones=new Set(stage.rows.map(r=>canonicalPhone(r.phone)).filter(Boolean));
    const seenHosts=new Set(stage.rows.map(r=>r.website_host).filter(Boolean));
    reviewedCount=seenIds.size;
-   const limit=DRY_RUN?Math.min(30,DIAG_LIMIT):REVIEW_TARGET;
-   for(let group=0;group<32&&reviewedCount<limit&&Date.now()<deadline;group++){
+   qualifiedCount=stage.rows.filter(r=>r.result==="eligible").length;
+   const needMore=()=>reviewedCount<REVIEW_TARGET||qualifiedCount<TARGET;
+   const room=()=>DRY_RUN?reviewedCount<Math.min(30,DIAG_LIMIT):reviewedCount<MAX_REVIEW_TARGET&&needMore();
+   for(let group=0;group<32&&room()&&Date.now()<deadline;group++){
     const r=await client.query("UPDATE partner_portal.crm_lead_import_runs SET next_group=next_group+1,updated_at=now() WHERE run_date=$1 RETURNING next_group-1 AS n",[today]);
     const cursor=r.rows[0].n;
     const first=(seed*7+cursor*3)%CITIES.length;
@@ -236,11 +239,11 @@ try{
      if(seenIds.has(row.source)||seenPhones.has(phone)||seenHosts.has(host)||isKnown(known,row))continue;
      seenIds.add(row.source);if(phone)seenPhones.add(phone);if(host)seenHosts.add(host);fresh.push(row);
     }
-    for(let offset=0;offset<fresh.length&&reviewedCount<limit&&Date.now()<deadline;offset+=CONCURRENCY){
-     const batch=fresh.slice(offset,offset+Math.min(CONCURRENCY,limit-reviewedCount));
+    for(let offset=0;offset<fresh.length&&room()&&Date.now()<deadline;offset+=CONCURRENCY){
+     const batch=fresh.slice(offset,offset+Math.min(CONCURRENCY,MAX_REVIEW_TARGET-reviewedCount));
      const checked=await Promise.all(batch.map(async row=>{try{return await enrich(row);}catch(e){if(errors.length<6)errors.push(errorBrief(e));return null;}}));
      for(let i=0;i<batch.length;i++){
-      const row=batch[i],details=checked[i];reviewedCount++;checkedThisRun++;
+      const row=batch[i],details=checked[i];reviewedCount++;checkedThisRun++;if(details)qualifiedCount++;
       if(DRY_RUN){if(details&&checkedThisRun<=5)console.log("VERIFIED PREVIEW "+JSON.stringify({name:details.name,type:details.type,phone:details.phone,website:details.website,score:qualityScore(details)}));continue;}
       const profile=details?Object.fromEntries(Object.entries(details).filter(([key])=>key!=="tags")):null;
       try{await client.query("INSERT INTO partner_portal.crm_lead_import_candidates(run_date,source_id,name,phone,website_host,result,score,profile) VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb) ON CONFLICT(run_date,source_id) DO NOTHING",[
@@ -253,7 +256,7 @@ try{
    if(!DRY_RUN){
     const counters=await client.query("SELECT count(*)::int AS reviewed,count(*) FILTER (WHERE result='eligible')::int AS qualified FROM partner_portal.crm_lead_import_candidates WHERE run_date=$1",[today]);
     reviewedCount=counters.rows[0].reviewed;qualifiedCount=counters.rows[0].qualified;
-    const publish=reviewedCount>=REVIEW_TARGET||finalSlot;
+    const publish=(reviewedCount>=REVIEW_TARGET&&qualifiedCount>=TARGET)||finalSlot;
     if(publish&&inserted<TARGET){
      const ranked=await client.query("SELECT profile FROM partner_portal.crm_lead_import_candidates WHERE run_date=$1 AND result='eligible' ORDER BY score DESC,checked_at ASC",[today]);
      for(const item of ranked.rows){
