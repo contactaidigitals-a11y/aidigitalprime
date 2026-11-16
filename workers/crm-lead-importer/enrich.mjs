@@ -40,7 +40,12 @@ function request(url,remoteIp,depth=0){
   try{
    req=https.request(url,{
     method:"GET",timeout:6500,maxHeaderSize:8192,
-    lookup:(hostname,options,cb)=>cb(null,remoteIp.address,remoteIp.family),
+    lookup:(_hostname,options,cb)=>{
+     // Node 20+ may request all DNS results. Return the expected array shape.
+     const pinned={address:remoteIp.address,family:remoteIp.family};
+     if(options?.all)cb(null,[pinned]);
+     else cb(null,pinned.address,pinned.family);
+    },
     headers:{"User-Agent":"AI-Digital-Prime-CRM-Research/1.0 (+https://aidigitalprime.co.uk)","Accept":"text/html,application/xhtml+xml"}
    },res=>{
     const status=res.statusCode||0;
