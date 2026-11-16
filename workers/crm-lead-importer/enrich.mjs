@@ -39,7 +39,7 @@ function request(url,remoteIp,depth=0){
   let total=0,body="",req;
   try{
    req=https.request(url,{
-    method:"GET",timeout:6500,maxHeaderSize:8192,
+    method:"GET",timeout:6500,signal:AbortSignal.timeout(10000),maxHeaderSize:8192,
     lookup:(_hostname,options,cb)=>{
      // Node 20+ may request all DNS results. Return the expected array shape.
      const pinned={address:remoteIp.address,family:remoteIp.family};
@@ -72,7 +72,7 @@ async function page(url,depth=0){
  if(depth>2)return null;
  const parsed=validSite(url);
  if(!parsed)return null;
- const ips=await lookup(parsed.hostname,{all:true}).catch(()=>[]);
+ const ips=await Promise.race([lookup(parsed.hostname,{all:true}).catch(()=>[]),new Promise(resolve=>setTimeout(()=>resolve([]),4500))]);
  if(!ips.length||ips.some(x=>!globalIp(x.address)))return null;
  const selected=ips.find(x=>x.family===4)||ips[0];
  const result=await request(parsed,selected,depth);
