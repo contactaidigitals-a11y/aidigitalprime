@@ -159,7 +159,7 @@ function londonDay(){
 const client=new pg.Client({connectionString:process.env.DATABASE_URL,connectionTimeoutMillis:15000,query_timeout:20000});
 const today=londonDay(),seed=Math.floor(new Date(today+"T00:00:00Z").getTime()/86400000);
 let created=0,attempted=0,seen=0,verified=0,errors=[],locked=false;
-const deadline=Date.now()+70*60_000;
+const deadline=Date.now()+15*60_000; // Keep each cron execution bounded; later runs resume the daily goal.
 try{
  await client.connect();
  const lock=await client.query("SELECT pg_try_advisory_lock(hashtext($1)) AS acquired",["aidp:overnight-crm:"+today]);
@@ -207,7 +207,7 @@ try{
    await client.query("INSERT INTO partner_portal.crm_lead_import_runs(run_date,created_count,candidate_count,attempted_count,status,detail) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT(run_date) DO UPDATE SET created_count=$2,candidate_count=$3,attempted_count=$4,status=$5,detail=$6,updated_at=now()",[today,created,seen,attempted,created>=TARGET?"complete":"partial",errors.slice(0,6).join(" | ")]);
   }
   console.log(JSON.stringify({ukDate:today,target:TARGET,created,attempted,seen,verified,dryRun:DRY_RUN,errors:errors.slice(0,6)}));
-  if(!DRY_RUN&&created<TARGET)process.exitCode=2;
+  if(!DRY_RUN&&created<TARGET)console.warn("PARTIAL_IMPORT: created "+created+" of "+TARGET+" leads. Recorded as partial for retry; not a runtime crash.");
  }
 }catch(e){console.error("Overnight importer failed: "+String(e));process.exitCode=1;}
 finally{
