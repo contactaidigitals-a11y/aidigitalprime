@@ -15,6 +15,9 @@ export function rejectLocalBusiness(row){
  if(!name.trim() || !host)return "missing identity or website";
  if(BRAND_NAME.test(name)||CHAIN_HOST.test(host))return "known national or large business brand";
  if(DIRECTORY_HOST.test(host))return "directory or booking aggregator, not business website";
+ if(/(?:^|\.)(?:nhs|gov)\.uk$/.test(host)||host.endsWith(".nhs.uk")||host.endsWith(".gov.uk"))return "public-sector organisation, not independent local business";
+ if(/(?:^|\.)(?:thetanningshop)\.co\.uk$/.test(host))return "multi-branch chain";
+ if(/\bmassage\s+parlour\b/i.test(name))return "non-target specialist business";
  if(tags["brand:wikidata"]||tags["operator:wikidata"]||tags.network||tags["network:wikidata"]||tags.franchise)return "branded chain or franchise network";
  if(tags.brand&&normalize(tags.brand)!==normalize(name))return "different brand operating this location";
  if(tags["operator:type"]&&/^(public|government|national|multinational)$/i.test(String(tags["operator:type"])))return "public or large organisation";
