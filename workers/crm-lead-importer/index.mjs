@@ -7,6 +7,7 @@ import { rejectLocalBusiness, sharedWebsiteCount, hostOf } from "./local-busines
 // No automated phone calls or marketing messages, no agent assignment.
 const TARGET=Math.min(100,Math.max(1,Number(process.env.LEADS_PER_DAY)||100));
 const DRY_RUN=process.env.DRY_RUN==="1";
+const DIAG_LIMIT=DRY_RUN?Math.max(1,Number(process.env.DIAGNOSTIC_MAX_ATTEMPTS)||Infinity):Infinity;
 if(!process.env.DATABASE_URL)throw Error("DATABASE_URL missing");
 const CITIES=[
  ["London",51.5074,-0.1278],["Manchester",53.4808,-2.2426],
@@ -96,9 +97,9 @@ function ql(region){
 }
 async function fetchRegion(region){
  const body=new URLSearchParams({data:ql(region)});
- for(const endpoint of ["https://overpass.private.coffee/api/interpreter","https://overpass-api.de/api/interpreter"]){
+ for(const endpoint of ["https://overpass-api.de/api/interpreter","https://overpass.private.coffee/api/interpreter"]){
   try{
-   const response=await fetch(endpoint,{method:"POST",body,headers:{"Accept":"application/json","User-Agent":"AIDigitalPrimeProspecting/1.0 (https://aidigitalprime.co.uk)"},signal:AbortSignal.timeout(75000)});
+   const response=await fetch(endpoint,{method:"POST",body,headers:{"Accept":"application/json","User-Agent":"AIDigitalPrimeProspecting/1.0 (https://aidigitalprime.co.uk)"},signal:AbortSignal.timeout(45000)});
    if(!response.ok)throw Error("HTTP "+response.status);
    const json=await response.json();
    if(!Array.isArray(json.elements))throw Error("Invalid OSM response");
@@ -171,7 +172,7 @@ try{
    const count=await client.query("SELECT count(*)::int AS n FROM partner_portal.leads WHERE research_source LIKE $1",["daily-leads:"+today+" | %"]);
    created=count.rows[0]?.n||0;
   }
-  for(let group=0;group<10&&created<TARGET&&Date.now()<deadline;group++){
+  for(let group=0;group<10&&created<TARGET&&attempted<DIAG_LIMIT&&Date.now()<deadline;group++){
    const first=(seed*7+group*3)%CITIES.length;
    const regions=[CITIES[first],CITIES[(first+Math.floor(CITIES.length/2))%CITIES.length]];
    const raw=await fetchRegion(regions);
@@ -181,13 +182,13 @@ try{
    // Verify six independent business websites concurrently. Keep database
    // writes serial to respect duplicate prevention and the exact daily cap.
    for(let offset=0;offset<leads.length;offset+=6){
-    if(created>=TARGET||Date.now()>=deadline||DRY_RUN&&verified>=10)break;
+    if(created>=TARGET||Date.now()>=deadline||attempted>=DIAG_LIMIT||DRY_RUN&&verified>=10)break;
     const slice=leads.slice(offset,offset+6);
     const checked=await Promise.all(slice.map(async row=>{
      try{return await enrich(row);}catch(e){errors.push(String(e).slice(0,180));return null;}
     }));
     for(const details of checked){
-     if(created>=TARGET||Date.now()>=deadline||DRY_RUN&&verified>=10)break;
+     if(created>=TARGET||Date.now()>=deadline||attempted>=DIAG_LIMIT||DRY_RUN&&verified>=10)break;
      attempted++;
      if(!details)continue;
      verified++;
