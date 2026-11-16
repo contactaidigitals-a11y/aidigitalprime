@@ -5,7 +5,9 @@ import { rejectLocalBusiness, sharedWebsiteCount, hostOf } from "./local-busines
 
 // Daily, no-contact prospect research worker for AI Digital Prime Public CRM.
 // No automated phone calls or marketing messages, no agent assignment.
-const TARGET=Math.min(100,Math.max(1,Number(process.env.LEADS_PER_DAY)||100));
+const TARGET=Math.min(300,Math.max(1,Number(process.env.LEADS_PER_DAY)||150));
+const REVIEW_TARGET=Math.min(5000,Math.max(TARGET,Number(process.env.REVIEW_PER_DAY)||1000));
+const CONCURRENCY=12;
 const DRY_RUN=process.env.DRY_RUN==="1";
 const DIAG_LIMIT=DRY_RUN?Math.max(1,Number(process.env.DIAGNOSTIC_MAX_ATTEMPTS)||Infinity):Infinity;
 if(!process.env.DATABASE_URL)throw Error("DATABASE_URL missing");
@@ -131,86 +133,151 @@ function candidates(elements,region){
  while(any){any=false;for(const k of keys){const a=groups.get(k).shift();if(a){all.push(a);any=true;}}}
  return all;
 }
+
+function canonicalPhone(value){
+ let digits=String(value||"").replace(/[^0-9]/g,"");
+ if(digits.startsWith("0044"))digits=digits.slice(4);
+ else if(digits.startsWith("44"))digits=digits.slice(2);
+ else if(digits.startsWith("0"))digits=digits.slice(1);
+ return digits;
+}
+function nameAddressKey(row){
+ const norm=s=>String(s||"").toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
+ return norm(row.name||row.company)+"|"+norm(row.address);
+}
+function registerKnown(known,row){
+ const phone=canonicalPhone(row.phone),host=hostOf(row.website||"");
+ if(phone)known.phones.add(phone);
+ if(host)known.hosts.add(host);
+ if((row.name||row.company)&&row.address)known.names.add(nameAddressKey(row));
+}
+function isKnown(known,row){
+ const phone=canonicalPhone(row.phone),host=hostOf(row.website||"");
+ return Boolean((phone&&known.phones.has(phone))||(host&&known.hosts.has(host))||(row.address&&known.names.has(nameAddressKey(row))));
+}
+function qualityScore(row){
+ const sectors={"Dental practice":30,"Vehicle repair":29,"Medical practice":27,"Clinic":26,"Optician":23,"Estate agency":22,"Accommodation":16,"Beauty salon":13,"Hair salon":13,"Tattoo studio":12,"Veterinary practice":11,"Massage business":10};
+ const address=String(row.address||"");
+ const edited=new Date(row.osmTimestamp||0).getTime();
+ const recent=Number.isFinite(edited)&&edited>Date.now()-2*365*86400000;
+ return 25+(sectors[row.type]||10)+(row.confidence==="website-phone-match"?25:12)+
+ (row.email?14:0)+(row.hours?8:0)+(/[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/i.test(address)?10:0)+
+ (row.companyNumber?5:0)+(recent?5:0);
+}
 async function insertLead(client,row,day){
  const sql=[
-  "INSERT INTO partner_portal.leads (id,company,phone,website,industry,address,business_hours,notes,activity_description,products_services,contact_email,company_number,company_size,research_source,status,created)",
-  "SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'new',now()",
-  "WHERE NOT EXISTS (SELECT 1 FROM partner_portal.leads x WHERE",
-  "($3::text IS NOT NULL AND x.phone=$3) OR",
-  "($4::text IS NOT NULL AND regexp_replace(lower(coalesce(x.website,'')), '^(https?://)?(www[.])?', '')=$4) OR",
-  "(lower(trim(x.company))=lower(trim($2)) AND lower(trim(coalesce(x.address,'')))=lower(trim($6))))",
-  "ON CONFLICT DO NOTHING RETURNING id"
+ "INSERT INTO partner_portal.leads (id,company,phone,website,industry,address,business_hours,notes,activity_description,products_services,contact_email,company_number,company_size,research_source,status,created)",
+ "SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'new',now()",
+ "WHERE NOT EXISTS (SELECT 1 FROM partner_portal.leads x WHERE",
+ "($3::text IS NOT NULL AND regexp_replace(regexp_replace(coalesce(x.phone,''),'[^0-9]','','g'),'^(0044|44|0)','') = $16) OR",
+ "($15::text IS NOT NULL AND regexp_replace(regexp_replace(lower(coalesce(x.website,'')), '^(https?://)?(www[.])?', ''), '/.*$', '') = $15) OR",
+ "(lower(trim(x.company))=lower(trim($2)) AND lower(trim(coalesce(x.address,'')))=lower(trim($6))))",
+ "ON CONFLICT DO NOTHING RETURNING id"
  ].join(" ");
- const source="daily-leads:"+day+" | "+row.source;
- const values=[
-  randomUUID(),row.name,row.phone,row.website,row.type,row.address,row.hours,row.notes,
-  row.description,row.description,row.email,row.companyNumber||'',row.companySize,source
- ];
+ const values=[randomUUID(),row.name,row.phone,row.website,row.type,row.address,row.hours||"",row.notes||"",
+ row.description||row.type,row.description||row.type,row.email||"",row.companyNumber||"",
+ row.companySize||"Local business (size unverified)","daily-leads:"+day+" | "+row.source,
+ hostOf(row.website||""),canonicalPhone(row.phone)];
  const result=await client.query(sql,values);
  return result.rowCount===1;
 }
-function londonDay(){
- const parts=new Intl.DateTimeFormat("en-GB",{
-  timeZone:"Europe/London",year:"numeric",month:"2-digit",day:"2-digit"
- }).formatToParts(new Date());
- const obj=Object.fromEntries(parts.map(x=>[x.type,x.value]));
- return obj.year+"-"+obj.month+"-"+obj.day;
+function ukClock(date=new Date()){
+ const parts=new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/London",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hourCycle:"h23"}).formatToParts(date);
+ const o=Object.fromEntries(parts.map(x=>[x.type,x.value]));
+ return {day:o.year+"-"+o.month+"-"+o.day,hour:Number(o.hour)};
 }
-
+function nextDay(day){
+ const d=new Date(day+"T12:00:00Z");d.setUTCDate(d.getUTCDate()+1);return d.toISOString().slice(0,10);
+}
+const clock=ukClock(),utcHour=new Date().getUTCHours();
+const inWindow=clock.hour>=20||clock.hour<8;
+const today=clock.hour>=20?nextDay(clock.day):clock.day;
+const finalSlot=utcHour===6;
+const seed=Math.floor(new Date(today+"T00:00:00Z").getTime()/86400000);
+const deadline=Date.now()+Math.min(30,Math.max(5,Number(process.env.MAX_RUN_MINUTES)||22))*60_000;
 const client=new pg.Client({connectionString:process.env.DATABASE_URL,connectionTimeoutMillis:15000,query_timeout:20000});
-const today=londonDay(),seed=Math.floor(new Date(today+"T00:00:00Z").getTime()/86400000);
-let created=0,attempted=0,seen=0,verified=0,errors=[],locked=false;
-const deadline=Date.now()+15*60_000; // Keep each cron execution bounded; later runs resume the daily goal.
+let inserted=0,reviewedCount=0,qualifiedCount=0,seen=0,checkedThisRun=0,errors=[],locked=false;
+const errorBrief=e=>String(e?.message||e).slice(0,180);
 try{
- await client.connect();
- const lock=await client.query("SELECT pg_try_advisory_lock(hashtext($1)) AS acquired",["aidp:overnight-crm:"+today]);
- locked=Boolean(lock.rows[0]?.acquired);
- if(!locked){console.log("Another overnight import is already running for "+today);process.exitCode=0;}
- else {
-  await client.query("CREATE TABLE IF NOT EXISTS partner_portal.crm_lead_import_runs (run_date date primary key, created_count integer not null default 0, candidate_count integer not null default 0, attempted_count integer not null default 0, status text not null default 'started', detail text not null default '', updated_at timestamptz not null default now())");
-  if(!DRY_RUN){
-   const count=await client.query("SELECT count(*)::int AS n FROM partner_portal.leads WHERE research_source LIKE $1",["daily-leads:"+today+" | %"]);
-   created=count.rows[0]?.n||0;
-  }
-  for(let group=0;group<10&&created<TARGET&&attempted<DIAG_LIMIT&&Date.now()<deadline;group++){
-   const first=(seed*7+group*3)%CITIES.length;
-   const regions=[CITIES[first],CITIES[(first+Math.floor(CITIES.length/2))%CITIES.length]];
-   const raw=await fetchRegion(regions);
-   seen+=raw.length;
-   const leads=candidates(raw,regions);
-   console.log("UK areas: "+regions.map(v=>v[0]).join(", ")+"; researched candidates "+leads.length);
-   // Verify six independent business websites concurrently. Keep database
-   // writes serial to respect duplicate prevention and the exact daily cap.
-   for(let offset=0;offset<leads.length;offset+=6){
-    if(created>=TARGET||Date.now()>=deadline||attempted>=DIAG_LIMIT||DRY_RUN&&verified>=10)break;
-    const slice=leads.slice(offset,offset+6);
-    const checked=await Promise.all(slice.map(async row=>{
-     try{return await enrich(row);}catch(e){errors.push(String(e).slice(0,180));return null;}
-    }));
-    for(const details of checked){
-     if(created>=TARGET||Date.now()>=deadline||attempted>=DIAG_LIMIT||DRY_RUN&&verified>=10)break;
-     attempted++;
-     if(!details)continue;
-     verified++;
-     if(DRY_RUN){if(verified<=5)console.log("VERIFIED PREVIEW "+JSON.stringify({...details,tags:undefined}).slice(0,900));continue;}
-     try{
-      const saved=await insertLead(client,details,today);
-      if(saved){created++;if(created===1||created%10===0)console.log("CRM_INSERT_PROGRESS "+JSON.stringify({ukDate:today,inserted:created,target:TARGET}));}
-      if(saved&&created%20===0){
-       await client.query("INSERT INTO partner_portal.crm_lead_import_runs(run_date,created_count,candidate_count,attempted_count,status,detail) VALUES ($1,$2,$3,$4,'running','') ON CONFLICT(run_date) DO UPDATE SET created_count=$2,candidate_count=crm_lead_import_runs.candidate_count+$3,attempted_count=crm_lead_import_runs.attempted_count+$4,status='running',updated_at=now()",[today,created,seen,attempted]);
-      }
-     }catch(e){if(errors.length<5)console.error("CRM_INSERT_ERROR "+String(e).slice(0,250));errors.push(String(e).slice(0,180));}
+ if(!inWindow)console.log("Overnight CRM worker idle: outside 20:00-08:00 UK window; no changes.");
+ else{
+  await client.connect();
+  const lock=await client.query("SELECT pg_try_advisory_lock(hashtext($1)) AS acquired",["aidp:overnight-crm:"+today]);
+  locked=Boolean(lock.rows[0]?.acquired);
+  if(!locked)console.log("Another overnight import is already running for "+today);
+  else{
+   await client.query("CREATE TABLE IF NOT EXISTS partner_portal.crm_lead_import_runs (run_date date primary key, created_count integer not null default 0, candidate_count integer not null default 0, attempted_count integer not null default 0, status text not null default 'started', detail text not null default '', updated_at timestamptz not null default now())");
+   await client.query("ALTER TABLE partner_portal.crm_lead_import_runs ADD COLUMN IF NOT EXISTS next_group integer not null default 0");
+   await client.query("CREATE TABLE IF NOT EXISTS partner_portal.crm_lead_import_candidates (run_date date not null, source_id text not null, name text not null, phone text, website_host text, checked_at timestamptz not null default now(), result text not null, score integer not null default 0, profile jsonb, PRIMARY KEY (run_date,source_id))");
+   await client.query("CREATE INDEX IF NOT EXISTS crm_lead_candidates_rank ON partner_portal.crm_lead_import_candidates(run_date,result,score DESC)");
+   await client.query("INSERT INTO partner_portal.crm_lead_import_runs(run_date) VALUES ($1) ON CONFLICT DO NOTHING",[today]);
+   const prior=await client.query("SELECT count(*)::int AS n FROM partner_portal.leads WHERE research_source LIKE $1",["daily-leads:"+today+" | %"]);
+   inserted=prior.rows[0].n;
+   const known={phones:new Set(),hosts:new Set(),names:new Set()};
+   const existing=await client.query("SELECT company,phone,website,address FROM partner_portal.leads");
+   for(const row of existing.rows)registerKnown(known,row);
+   const stage=await client.query("SELECT source_id,phone,website_host FROM partner_portal.crm_lead_import_candidates WHERE run_date=$1",[today]);
+   const seenIds=new Set(stage.rows.map(r=>r.source_id));
+   const seenPhones=new Set(stage.rows.map(r=>canonicalPhone(r.phone)).filter(Boolean));
+   const seenHosts=new Set(stage.rows.map(r=>r.website_host).filter(Boolean));
+   reviewedCount=seenIds.size;
+   const limit=DRY_RUN?Math.min(30,DIAG_LIMIT):REVIEW_TARGET;
+   for(let group=0;group<32&&reviewedCount<limit&&Date.now()<deadline;group++){
+    const r=await client.query("UPDATE partner_portal.crm_lead_import_runs SET next_group=next_group+1,updated_at=now() WHERE run_date=$1 RETURNING next_group-1 AS n",[today]);
+    const cursor=r.rows[0].n;
+    const first=(seed*7+cursor*3)%CITIES.length;
+    const region=[CITIES[first],CITIES[(first+Math.floor(CITIES.length/2))%CITIES.length]];
+    const raw=await fetchRegion(region);seen+=raw.length;
+    const leads=candidates(raw,region);
+    console.log("RESEARCH_REGION "+JSON.stringify({day:today,areas:region.map(x=>x[0]),cursor,candidates:leads.length}));
+    const fresh=[];
+    for(const row of leads){
+     const phone=canonicalPhone(row.phone),host=hostOf(row.website);
+     if(seenIds.has(row.source)||seenPhones.has(phone)||seenHosts.has(host)||isKnown(known,row))continue;
+     seenIds.add(row.source);if(phone)seenPhones.add(phone);if(host)seenHosts.add(host);fresh.push(row);
     }
+    for(let offset=0;offset<fresh.length&&reviewedCount<limit&&Date.now()<deadline;offset+=CONCURRENCY){
+     const batch=fresh.slice(offset,offset+Math.min(CONCURRENCY,limit-reviewedCount));
+     const checked=await Promise.all(batch.map(async row=>{try{return await enrich(row);}catch(e){if(errors.length<6)errors.push(errorBrief(e));return null;}}));
+     for(let i=0;i<batch.length;i++){
+      const row=batch[i],details=checked[i];reviewedCount++;checkedThisRun++;
+      if(DRY_RUN){if(details&&checkedThisRun<=5)console.log("VERIFIED PREVIEW "+JSON.stringify({name:details.name,type:details.type,phone:details.phone,website:details.website,score:qualityScore(details)}));continue;}
+      const profile=details?Object.fromEntries(Object.entries(details).filter(([key])=>key!=="tags")):null;
+      try{await client.query("INSERT INTO partner_portal.crm_lead_import_candidates(run_date,source_id,name,phone,website_host,result,score,profile) VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb) ON CONFLICT(run_date,source_id) DO NOTHING",[
+       today,row.source,row.name,row.phone,hostOf(row.website),details?"eligible":"rejected",details?qualityScore(details):0,profile?JSON.stringify(profile):null
+      ]);}catch(e){if(errors.length<6)errors.push("STAGING: "+errorBrief(e));throw e;}
+     }
+    }
+    if(DRY_RUN)break;
    }
-   if(DRY_RUN)break;
+   if(!DRY_RUN){
+    const counters=await client.query("SELECT count(*)::int AS reviewed,count(*) FILTER (WHERE result='eligible')::int AS qualified FROM partner_portal.crm_lead_import_candidates WHERE run_date=$1",[today]);
+    reviewedCount=counters.rows[0].reviewed;qualifiedCount=counters.rows[0].qualified;
+    const publish=reviewedCount>=REVIEW_TARGET||finalSlot;
+    if(publish&&inserted<TARGET){
+     const ranked=await client.query("SELECT profile FROM partner_portal.crm_lead_import_candidates WHERE run_date=$1 AND result='eligible' ORDER BY score DESC,checked_at ASC",[today]);
+     for(const item of ranked.rows){
+      if(inserted>=TARGET)break;
+      const lead=item.profile;
+      if(!lead||isKnown(known,lead))continue;
+      try{
+       const saved=await insertLead(client,lead,today);
+       if(saved){inserted++;registerKnown(known,lead);if(inserted===1||inserted%10===0)console.log("CRM_INSERT_PROGRESS "+JSON.stringify({ukDate:today,inserted,target:TARGET,screened:reviewedCount}));}
+      }catch(e){if(errors.length<6)errors.push("INSERT: "+errorBrief(e));console.error("CRM_INSERT_ERROR "+errorBrief(e));}
+     }
+    }
+    const complete=inserted>=TARGET&&reviewedCount>=REVIEW_TARGET;
+    const status=complete?"complete":(publish?"partial":"researching");
+    const summary="Screened "+reviewedCount+"/"+REVIEW_TARGET+"; eligible "+qualifiedCount+"; imported "+inserted+"/"+TARGET;
+    await client.query("UPDATE partner_portal.crm_lead_import_runs SET created_count=$2,candidate_count=$3,attempted_count=$4,status=$5,detail=$6,updated_at=now() WHERE run_date=$1",[
+     today,inserted,qualifiedCount,reviewedCount,status,summary+(errors.length?" | "+errors.join(" | "):"")
+    ]);
+    console.log("DAILY_IMPORT_SUMMARY "+JSON.stringify({ukDate:today,screeningTarget:REVIEW_TARGET,reviewed:reviewedCount,eligible:qualifiedCount,importTarget:TARGET,inserted,published:publish,finalSlot,status,checkedThisRun,rawRecordsSeen:seen,errors}));
+    if(!complete)console.warn("PARTIAL_IMPORT: "+summary+"; no placeholders or unverified businesses created.");
+   }else console.log("DRY_RUN_SUMMARY "+JSON.stringify({ukDate:today,checkedThisRun,reviewedCount,rawRecordsSeen:seen}));
   }
-  if(!DRY_RUN){
-   await client.query("INSERT INTO partner_portal.crm_lead_import_runs(run_date,created_count,candidate_count,attempted_count,status,detail) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT(run_date) DO UPDATE SET created_count=$2,candidate_count=$3,attempted_count=$4,status=$5,detail=$6,updated_at=now()",[today,created,seen,attempted,created>=TARGET?"complete":"partial",errors.slice(0,6).join(" | ")]);
-  }
-  console.log(JSON.stringify({ukDate:today,target:TARGET,created,attempted,seen,verified,dryRun:DRY_RUN,errors:errors.slice(0,6)}));
-  if(!DRY_RUN&&created<TARGET)console.warn("PARTIAL_IMPORT: created "+created+" of "+TARGET+" leads. Recorded as partial for retry; not a runtime crash.");
  }
-}catch(e){console.error("Overnight importer failed: "+String(e));process.exitCode=1;}
+}catch(e){console.error("Overnight importer failed: "+errorBrief(e));process.exitCode=1;}
 finally{
  if(locked)await client.query("SELECT pg_advisory_unlock(hashtext($1))",["aidp:overnight-crm:"+today]).catch(()=>{});
  await client.end().catch(()=>{});
