@@ -23,7 +23,7 @@ export async function POST(request:Request) {
  if(!firstName||!lastName||!email||!phone||!city||!nationality||!["Native","Fluent / professional","Intermediate / conversational","Basic"].includes(englishLevel)||!["Yes","No"].includes(rightToWork)||clean(data.get("privacyAcknowledged"))!=="yes"||clean(data.get("aiInterviewAcknowledged"))!=="yes")return Response.json({message:"Please complete all required fields."},{status:400});
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!/^[+0-9() .-]{7,30}$/.test(phone))return Response.json({message:"Enter a valid email address and phone number."},{status:400});
  const interviewDate=clean(data.get("interviewDate"),10),interviewTime=clean(data.get("interviewTime"),5);
- if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(interviewDate)||!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(interviewTime))return Response.json({message:"Please select an interview date and time (UK time)."},{status:400});
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(interviewDate)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(interviewTime))return Response.json({message:"Please select an interview date and time (UK time)."},{status:400});
  const requested=new Date(interviewDate+"T"+interviewTime+":00Z");
  if(Number.isNaN(requested.getTime())||requested.toISOString().slice(0,10)!==interviewDate)return Response.json({message:"Invalid interview date."},{status:400});
  const cv=data.get("cv");const attachments:Array<{filename:string,content:string}>=[];
