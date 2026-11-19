@@ -57,6 +57,7 @@ export default function OutreachPage(){
  const [selected,setSelected]=useState("");
  const [discoveryReady,setDiscoveryReady]=useState(false);
  const [sheetSyncReady,setSheetSyncReady]=useState(false);
+ const [larkConnected,setLarkConnected]=useState(false);
  const [sheetShareEmail,setSheetShareEmail]=useState("");
  const [found,setFound]=useState<Discovered[]>([]);
  const [days,setDays]=useState(30);
@@ -154,6 +155,13 @@ export default function OutreachPage(){
   const url="mailto:"+encodeURIComponent(lead.email)+"?subject="+encodeURIComponent(lead.subject)+"&body="+encodeURIComponent(body);
   window.location.href=url;
  }
+ async function checkLark(){
+  try{
+   const data=await api("/api/admin/lark/status");
+   setLarkConnected(Boolean(data.connected));
+   setNotice(data.connected?"Lark Mail is connected. OAuth credentials are saved securely.":"Lark is not connected yet. If authorisation was completed, check the callback result.");
+  }catch(e){setError(e instanceof Error?e.message:"Unable to check Lark connection.");}
+ }
  async function connectLark(){
   await submit("lark-connect",async()=>{
    const response=await fetch("/api/admin/lark/connect",{credentials:"same-origin",cache:"no-store"});
@@ -237,6 +245,8 @@ export default function OutreachPage(){
     <section className="aidp-panel">
      <div className="aidp-section-heading"><div><h2>Lead pipeline</h2><p>Click a business to prepare outreach or update its status.</p></div></div>
      <div className="aidp-form-actions" style={{marginBottom:12}}>
+      <button className="aidp-btn aidp-btn-subtle" type="button" disabled={!!busy} onClick={checkLark}>Check Lark connection</button>
+      <small>{larkConnected?"Lark connection saved":"Connection not yet verified"}</small>
       <button className="aidp-btn aidp-btn-subtle" type="button" disabled={!!busy} onClick={connectLark}>
        {busy==="lark-connect"?"Connecting…":"Connect Lark Mail"}
       </button>
