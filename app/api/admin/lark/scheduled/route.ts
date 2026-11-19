@@ -135,7 +135,8 @@ export async function POST(req:Request){
    const alreadySentToday=current.filter(p=>p.history.some(h=>h.action==="lark-sent"&&dayUK(new Date(h.at))===date)).length;
    const sendQuota=Math.min(12,Math.max(0,Math.floor((slot+1)*100/12)-alreadySentToday));
    const toSend=current.filter(p=>((p.permission==="consented"&&Boolean(p.consentEvidence))||
-    (p.permission==="corporate-reviewed"&&["ltd","llp"].includes(p.businessType)&&Boolean(p.companyNumber)))&&
+    (p.permission==="corporate-reviewed"&&["ltd","llp"].includes(p.businessType)&&Boolean(p.companyNumber))||
+    (p.permission==="owner-reviewed"&&p.source.startsWith("Public CRM — daily-leads:")))&&
     !["suppressed","contacted","replied","interested","meeting","not-interested"].includes(p.status)&&
     !p.history.some(h=>["unsubscribed","lark-sent","email-sent","manual-sent"].includes(h.action))&&
     p.history.some(h=>h.action==="lark-draft"&&h.note.includes("Unsubscribe link included")));
