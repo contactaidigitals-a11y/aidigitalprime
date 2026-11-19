@@ -230,3 +230,30 @@ export async function mergeSheetProspects(input: Record<string,unknown>[]):Promi
   return {created,updated,skipped,total:leads.length};
  });
 }
+
+/** Persist AI-generated drafts without changing contact eligibility or sending email. */
+export async function saveAiDrafts(drafts: Array<{id:string;subject:string;body:string}>):Promise<number>{
+ return serial(async()=>{
+  const leads=await readProspects();
+  const now=new Date().toISOString();
+  let saved=0;
+  for(const draft of drafts){
+   const lead=leads.find(x=>x.id===draft.id);
+   if(!lead || lead.status==="suppressed" || lead.permission==="do-not-contact" ||
+      lead.history.some(h=>h.action==="unsubscribed") ||
+      !["new","researching","ready"].includes(lead.status) ||
+      !emailValid(lead.email) || lead.history.some(h=>h.action==="ai-draft"))continue;
+   const subject=clean(draft.subject,180).replace(/[\r\n]+/g," ");
+   const body=clean(draft.body,4000);
+   if(!subject || !body)continue;
+   lead.subject=subject;
+   lead.emailBody=body;
+   lead.updatedAt=now;
+   lead.history.push({at:now,action:"ai-draft",note:"AI personalised draft saved by batch assistant; no email sent"});
+   lead.history=lead.history.slice(-40);
+   saved++;
+  }
+  if(saved)await commit(leads);
+  return saved;
+ });
+}
