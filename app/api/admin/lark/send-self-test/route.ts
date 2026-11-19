@@ -4,6 +4,7 @@ import { larkAccessToken } from "../_tokens";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 const mailbox="sales@aidigitalprime.co.uk";
+const recipient="andrei@tracelio.co.uk";
 export async function POST(req:Request){
  const secret=process.env.OUTREACH_CRON_SECRET||"";
  const auth=req.headers.get("authorization")||"";
@@ -14,7 +15,7 @@ export async function POST(req:Request){
  const root="https://open.larksuite.com/open-apis/mail/v1/user_mailboxes/"+encodeURIComponent(mailbox);
  const subject="AI Digital Prime - Lark sending permission test";
  const eml=["From: AI Digital Prime Sales <"+mailbox+">",
- "To: <"+mailbox+">","Subject: "+subject,"MIME-Version: 1.0",
+ "To: <"+recipient+">","Subject: "+subject,"MIME-Version: 1.0",
  "Content-Type: text/plain; charset=UTF-8","","This is a one-time internal integration test. No external prospect was contacted.",""].join("\r\n");
  try{
   const token=await larkAccessToken();
@@ -28,6 +29,6 @@ export async function POST(req:Request){
   if(!send.ok||result.code!==0)return noStore({ok:false,stage:"send",code:result.code??send.status,message:String(result.msg||"Lark send rejected").slice(0,200),draftId:id},502);
   if(result.data?.automation_send_disable)return noStore({ok:false,stage:"send",message:"Lark mailbox automation disallows sending: "+String(result.data.automation_send_disable.reason||"disabled"),draftId:id},409);
   if(!result.data?.message_id)return noStore({ok:false,stage:"send",message:"Send returned success but no message ID. Check own inbox/Sent; do not retry blindly.",draftId:id},409);
-  return noStore({ok:true,recipient:mailbox,subject,draftId:id,messageId:result.data.message_id});
+  return noStore({ok:true,recipient,subject,draftId:id,messageId:result.data.message_id});
  }catch(e){return noStore({ok:false,message:e instanceof Error?e.message:"Lark test failed"},503);}
 }
