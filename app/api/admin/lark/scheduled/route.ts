@@ -102,7 +102,7 @@ export async function POST(req:Request){
   const attemptedToday=leads.filter(p=>p.history.some(h=>h.action==="lark-draft"&&dayUK(new Date(h.at))===date)).length;
   const limit=Math.min(12,Math.max(0,Math.floor((slot+1)*100/12)-attemptedToday));
   const valid=leads.filter(p=>!["contacted","replied","interested","meeting","not-interested","suppressed"].includes(p.status)&&
-    ["consented","corporate-reviewed"].includes(p.permission)&&validEmail(p.email)&&
+    p.permission!=="do-not-contact"&&validEmail(p.email)&&
     !p.lastContactAt&&!p.history.some(h=>["unsubscribed","lark-draft","lark-sent","manual-sent","email-sent"].includes(h.action))&&
     (p.permission!=="consented"||Boolean(p.consentEvidence)));
   let drafted=0,sent=0,errors=0;
