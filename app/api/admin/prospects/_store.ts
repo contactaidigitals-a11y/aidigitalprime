@@ -18,7 +18,7 @@ export type Prospect = {
   hours?: string;
   email: string;
   businessType: "ltd" | "llp" | "sole-trader" | "unknown";
-  permission: "unverified" | "corporate-reviewed" | "consented" | "do-not-contact";
+  permission: "unverified" | "owner-reviewed" | "corporate-reviewed" | "consented" | "do-not-contact";
   consentEvidence: string;
   source: string;
   sourceUrl: string;
@@ -143,7 +143,7 @@ export async function updateProspect(raw:Record<string,unknown>):Promise<Prospec
       const type=raw.businessType;
       if(typeof type==="string"&&["ltd","llp","sole-trader","unknown"].includes(type))previous.businessType=type as Prospect["businessType"];
       const perm=raw.permission;
-      if(typeof perm==="string"&&["unverified","corporate-reviewed","consented","do-not-contact"].includes(perm))previous.permission=perm as Prospect["permission"];
+      if(typeof perm==="string"&&["unverified","owner-reviewed","corporate-reviewed","consented","do-not-contact"].includes(perm))previous.permission=perm as Prospect["permission"];
       const status=raw.status;
       if(typeof status==="string"&&["new","researching","ready","contacted","replied","interested","meeting","not-interested","suppressed"].includes(status))previous.status=status as ProspectStatus;
       if(previous.permission==="consented"&&!previous.consentEvidence)throw Error("Record proof of opt-in before selecting consented.");
@@ -299,7 +299,8 @@ export async function recordScheduledLarkSend(id:string,messageId:string):Promis
   if(lead.history.some(h=>h.action==="lark-sent"))return;
   const optedIn=lead.permission==="consented"&&Boolean(lead.consentEvidence);
   const reviewedCorporate=lead.permission==="corporate-reviewed"&&["ltd","llp"].includes(lead.businessType)&&Boolean(lead.companyNumber);
-  if((!optedIn&&!reviewedCorporate)||
+  const ownerApproved=lead.permission==="owner-reviewed"&&lead.source.startsWith("Public CRM — daily-leads:");
+  if((!optedIn&&!reviewedCorporate&&!ownerApproved)||
      lead.status==="suppressed"||lead.permission==="do-not-contact"||
      lead.history.some(h=>h.action==="unsubscribed"))
    throw Error("Send blocked by eligibility or suppression");
@@ -308,5 +309,28 @@ export async function recordScheduledLarkSend(id:string,messageId:string):Promis
   lead.history.push({at,action:"lark-sent",note:"Lark accepted automated send; message ID: "+messageId.slice(0,150)});
   lead.history=lead.history.slice(-40);
   await commit(leads);
+ });
+}
+
+/** Operator-reviewed companies are not relabelled as consented or as LTD/LLP. */
+export async function markExistingImportedProspectsOwnerReviewed():Promise<{reviewed:number;skipped:number}>{
+ return serial(async()=>{
+  const leads=await readProspects(),now=new Date().toISOString();
+  let reviewed=0,skipped=0;
+  for(const item of leads){
+   if(!item.source.startsWith("Public CRM — daily-leads:"))continue;
+   if(item.permission!=="unverified"||item.status==="suppressed"||item.lastContactAt||
+      item.history.some(h=>["unsubscribed","lark-sent","email-sent","manual-sent"].includes(h.action))){
+    skipped++;continue;
+   }
+   item.permission="owner-reviewed";
+   item.verifiedAt=now;
+   item.updatedAt=now;
+   item.history.push({at:now,action:"owner-reviewed",note:"Business reviewed by operator on 19 November 2026; legal form and marketing opt-in not independently verified"});
+   item.history=item.history.slice(-40);
+   reviewed++;
+  }
+  if(reviewed)await commit(leads);
+  return {reviewed,skipped};
  });
 }
