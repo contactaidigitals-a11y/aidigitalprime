@@ -297,9 +297,12 @@ export async function recordScheduledLarkSend(id:string,messageId:string):Promis
   const leads=await readProspects(),lead=leads.find(x=>x.id===id);
   if(!lead)throw Error("Lead not found");
   if(lead.history.some(h=>h.action==="lark-sent"))return;
-  if(lead.permission!=="consented"||!lead.consentEvidence||
+  const optedIn=lead.permission==="consented"&&Boolean(lead.consentEvidence);
+  const reviewedCorporate=lead.permission==="corporate-reviewed"&&["ltd","llp"].includes(lead.businessType)&&Boolean(lead.companyNumber);
+  if((!optedIn&&!reviewedCorporate)||
      lead.status==="suppressed"||lead.permission==="do-not-contact"||
-     lead.history.some(h=>h.action==="unsubscribed"))throw Error("Send blocked by consent or suppression");
+     lead.history.some(h=>h.action==="unsubscribed"))
+   throw Error("Send blocked by eligibility or suppression");
   const at=new Date().toISOString();
   lead.status="contacted";lead.lastContactAt=at;lead.updatedAt=at;
   lead.history.push({at,action:"lark-sent",note:"Lark accepted automated send; message ID: "+messageId.slice(0,150)});
