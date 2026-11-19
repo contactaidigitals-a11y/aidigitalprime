@@ -66,9 +66,11 @@ export function makeDraft(lead: Pick<Prospect,"business"|"incorporationDate"|"ob
     : lead.service === "Chatbot" ? "a website assistant to help answer common customer questions"
     : lead.service === "New Business Launch" ? "a straightforward digital launch package for a newly formed business"
     : "an AI phone receptionist to answer customer calls, including outside normal opening hours";
+  const promo = lead.service === "AI Receptionist" ? "We can offer 50% off the setup fee and the first month free with 50 AI receptionist call minutes included.\n\n" : "";
   const body = "Hello " + business + " team,\n\n" +
     launch + observed +
     "I'm contacting you from AI Digital Prime, operated by CALINESCU TECHNOLOGIES LTD. We help UK businesses with " + service + ".\n\n" +
+    promo +
     "Would it be useful if I sent you a short example of how this could work for your business?\n\n" +
     "Best regards,\nAI Digital Prime\nhttps://aidigitalprime.co.uk\n\n" +
     "If you prefer not to receive any further emails, just reply 'unsubscribe'.";
