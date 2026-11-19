@@ -257,3 +257,18 @@ export async function saveAiDrafts(drafts: Array<{id:string;subject:string;body:
   return saved;
  });
 }
+
+/** Store Lark's successful draft ID in CRM. This does not mark a lead contacted. */
+export async function recordLarkDraft(id:string,draftId:string):Promise<void>{
+ await serial(async()=>{
+  const leads=await readProspects();
+  const lead=leads.find(x=>x.id===id);
+  if(!lead)throw Error("Lead not found");
+  if(lead.history.some(h=>h.action==="lark-draft"))return;
+  const at=new Date().toISOString();
+  lead.history.push({at,action:"lark-draft",note:"Saved in Lark Sales Drafts (draft ID: "+draftId.slice(0,150)+"). Not sent."});
+  lead.history=lead.history.slice(-40);
+  lead.updatedAt=at;
+  await commit(leads);
+ });
+}
