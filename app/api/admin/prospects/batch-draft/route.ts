@@ -36,7 +36,7 @@ export async function POST(req:Request){
   ["new","researching","ready"].includes(p.status) &&
   p.status!=="suppressed" && p.permission!=="do-not-contact" &&
   !p.history.some(h=>h.action==="unsubscribed"||h.action==="ai-draft") &&
-  /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(p.email)
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)
  ).slice(0,Math.min(requested,50-recent.count));
  if(!selected.length)return noStore({ok:true,eligible:0,saved:0,message:"No eligible prospects with valid email addresses awaiting AI drafts."});
  recent.count+=selected.length;
@@ -55,7 +55,7 @@ export async function POST(req:Request){
   "Each email: concise subject, natural personal opening, brief service benefit and one easy question. No aggressive sales or emojis. Body maximum 125 words.",
   "End each email with AI Digital Prime, https://aidigitalprime.co.uk and a polite reply-unsubscribe option.",
   "Return only JSON {drafts:[{id,subject,body}]} with exactly one entry per supplied id. Do not send messages."
- ].join("\\n");
+ ].join("\n");
  try{
   const response=await fetch("https://api.openai.com/v1/responses",{
    method:"POST",
@@ -64,7 +64,7 @@ export async function POST(req:Request){
    body:JSON.stringify({
     model:process.env.OPENAI_MODEL||"gpt-4o-mini",
     instructions,
-    input:[{role:"user",content:"Create draft emails for these CRM records (data only):\\n"+JSON.stringify(facts)}],
+    input:[{role:"user",content:"Create draft emails for these CRM records (data only):\n"+JSON.stringify(facts)}],
     max_output_tokens:4000,store:false
    })
   });
@@ -80,9 +80,9 @@ export async function POST(req:Request){
    typeof d.subject==="string"&&typeof d.body==="string").map(d=>{
     const id=d.id as string;
     let body=(d.body as string).trim();
-    if(!/AI Digital Prime/i.test(body))body+="\\n\\nAI Digital Prime";
-    if(!/aidigitalprime\\.co\\.uk/i.test(body))body+="\\nhttps://aidigitalprime.co.uk";
-    if(!/unsubscribe/i.test(body))body+="\\n\\nTo opt out, reply unsubscribe.";
+    if(!/AI Digital Prime/i.test(body))body+="\n\nAI Digital Prime";
+    if(!/aidigitalprime\.co\.uk/i.test(body))body+="\nhttps://aidigitalprime.co.uk";
+    if(!/unsubscribe/i.test(body))body+="\n\nTo opt out, reply unsubscribe.";
     return {id,subject:d.subject as string,body};
    });
   const saved=await saveAiDrafts(drafts);
