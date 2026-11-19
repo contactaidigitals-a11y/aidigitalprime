@@ -58,6 +58,7 @@ export default function OutreachPage(){
  const [discoveryReady,setDiscoveryReady]=useState(false);
  const [sheetSyncReady,setSheetSyncReady]=useState(false);
  const [larkConnected,setLarkConnected]=useState(false);
+ const [campaign,setCampaign]=useState<{day:string;goal:number;drafts:number;sent:number;eligible:number;sendingEnabled:boolean;window:string}|null>(null);
  const [sheetShareEmail,setSheetShareEmail]=useState("");
  const [found,setFound]=useState<Discovered[]>([]);
  const [days,setDays]=useState(30);
@@ -75,6 +76,7 @@ export default function OutreachPage(){
   if(!d.authenticated){setAuth("required");return}
   setAuth("ready");
   await load();
+  api("/api/admin/lark/campaign").then(x=>{if(alive)setCampaign(x)}).catch(()=>{});
   const [res,sheet]=await Promise.all([api("/api/admin/discovery"),api("/api/admin/sheets-sync")]);
   if(alive){setDiscoveryReady(res.configured);setSheetSyncReady(sheet.configured);setSheetShareEmail(sheet.serviceAccountEmail||"");}
  }).catch(e=>{if(alive){setError(e.message);setAuth("required")}});return()=>{alive=false}},[]);
@@ -219,6 +221,18 @@ export default function OutreachPage(){
     <div className="aidp-kpi"><span>Contacted</span><strong>{stats.contacted}</strong><small>Sent or manually marked</small></div>
     <div className="aidp-kpi"><span>Replies / interested / meetings</span><strong>{stats.replies}</strong><small>Operator-updated</small></div>
    </div>
+   <section className="aidp-panel" style={{marginBottom:16}}>
+    <div className="aidp-section-heading">
+     <div><h2>Daily AI email campaign</h2><p>Scheduled every 10 minutes, 09:00–11:00 UK time. Target: up to 100 new drafts/day.</p></div>
+     <button className="aidp-btn aidp-btn-subtle" type="button" onClick={()=>api("/api/admin/lark/campaign").then(setCampaign).catch(e=>setError(e.message))}>Refresh campaign</button>
+    </div>
+    {campaign&&<div className="aidp-kpis">
+     <div className="aidp-kpi"><span>Drafts today</span><strong>{campaign.drafts} / {campaign.goal}</strong></div>
+     <div className="aidp-kpi"><span>Sent today</span><strong>{campaign.sent}</strong><small>{campaign.sendingEnabled?"Opted-in contacts only":"Automatic sending OFF — Lark send permission required"}</small></div>
+     <div className="aidp-kpi"><span>Remaining qualified leads</span><strong>{campaign.eligible}</strong><small>Corporate reviewed / consented</small></div>
+    </div>}
+    <p className="aidp-footnote">No unverified contacts, opt-outs or prior-contacted leads are included. Draft generation is automatic; sending remains disabled until Lark send scope is granted and reauthorised.</p>
+   </section>
    <div className="aidp-outreach-grid">
     <section className="aidp-panel">
      <div className="aidp-section-heading"><div><h2>Find or add businesses</h2><p>Import a list, discover new LTDs or add a single company.</p></div></div>
