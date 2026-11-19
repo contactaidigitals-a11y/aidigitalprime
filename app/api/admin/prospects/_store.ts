@@ -272,3 +272,36 @@ export async function recordLarkDraft(id:string,draftId:string):Promise<void>{
   await commit(leads);
  });
 }
+
+
+/** Durable scheduled campaign update. Recording lark-draft prevents future duplicate selection. */
+export async function recordScheduledLarkDraft(id:string,draftId:string,subject:string,body:string):Promise<void>{
+ await serial(async()=>{
+  const leads=await readProspects(),lead=leads.find(x=>x.id===id);
+  if(!lead)throw Error("Lead not found");
+  if(lead.history.some(h=>h.action==="lark-draft"))return;
+  if(lead.status==="suppressed"||lead.permission==="do-not-contact"||lead.history.some(h=>h.action==="unsubscribed"))
+   throw Error("Lead suppressed");
+  const at=new Date().toISOString();
+  lead.subject=subject.slice(0,220);lead.emailBody=body.slice(0,6000);lead.updatedAt=at;
+  lead.history.push({at,action:"lark-draft",note:"Scheduled draft saved in Sales Lark (draft ID: "+draftId.slice(0,150)+"). Not sent."});
+  lead.history=lead.history.slice(-40);
+  await commit(leads);
+ });
+}
+/** Only an API-confirmed send marks a lead contacted. */
+export async function recordScheduledLarkSend(id:string,messageId:string):Promise<void>{
+ await serial(async()=>{
+  const leads=await readProspects(),lead=leads.find(x=>x.id===id);
+  if(!lead)throw Error("Lead not found");
+  if(lead.history.some(h=>h.action==="lark-sent"))return;
+  if(lead.permission!=="consented"||!lead.consentEvidence||
+     lead.status==="suppressed"||lead.permission==="do-not-contact"||
+     lead.history.some(h=>h.action==="unsubscribed"))throw Error("Send blocked by consent or suppression");
+  const at=new Date().toISOString();
+  lead.status="contacted";lead.lastContactAt=at;lead.updatedAt=at;
+  lead.history.push({at,action:"lark-sent",note:"Lark accepted automated send; message ID: "+messageId.slice(0,150)});
+  lead.history=lead.history.slice(-40);
+  await commit(leads);
+ });
+}
