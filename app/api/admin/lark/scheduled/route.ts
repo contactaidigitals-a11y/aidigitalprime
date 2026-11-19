@@ -138,7 +138,7 @@ export async function POST(req:Request){
     (p.permission==="corporate-reviewed"&&["ltd","llp"].includes(p.businessType)&&Boolean(p.companyNumber)))&&
     !["suppressed","contacted","replied","interested","meeting","not-interested"].includes(p.status)&&
     !p.history.some(h=>["unsubscribed","lark-sent","email-sent","manual-sent"].includes(h.action))&&
-    p.history.some(h=>h.action==="lark-draft"));
+    p.history.some(h=>h.action==="lark-draft"&&h.note.includes("Unsubscribe link included")));
    for(const lead of toSend.slice(0,sendQuota)){
     if(timeUK(new Date()).hour>=11)break;
     const fresh=(await readProspects()).find(p=>p.id===lead.id);
