@@ -140,6 +140,13 @@ export default function OutreachPage(){
   const url="mailto:"+encodeURIComponent(lead.email)+"?subject="+encodeURIComponent(lead.subject)+"&body="+encodeURIComponent(body);
   window.location.href=url;
  }
+ async function batchDraft(){
+  await submit("batch-draft",async()=>{
+   const result=await api("/api/admin/prospects/batch-draft",{limit:10});
+   await load();
+   setNotice(result.message);
+  });
+ }
  async function aiDraft(){
   if(!details)return;
   await submit("ai-draft",async()=>{
@@ -207,6 +214,12 @@ export default function OutreachPage(){
     </section>
     <section className="aidp-panel">
      <div className="aidp-section-heading"><div><h2>Lead pipeline</h2><p>Click a business to prepare outreach or update its status.</p></div></div>
+     <div className="aidp-form-actions" style={{marginBottom:12}}>
+      <button className="aidp-btn" type="button" disabled={!!busy} onClick={batchDraft}>
+       {busy==="batch-draft"?"Generating drafts…":"AI Agent: Draft next 10 emails"}
+      </button>
+      <small>Uses business details and email addresses already in this CRM. Saves drafts only; never sends messages.</small>
+     </div>
      <div className="aidp-lead-filters"><input type="search" placeholder="Search business, company number or email" value={search} onChange={e=>setSearch(e.target.value)}/>
       <select value={filter} onChange={e=>setFilter(e.target.value as Status|"all")}><option value="all">All stages</option>{statuses.map(s=><option key={s} value={s}>{statusLabel(s)}</option>)}</select></div>
      <div className="aidp-prospect-list">{filtered.length?filtered.slice(0,300).map(l=><button className={"aidp-prospect "+(selected===l.id?"selected":"")} onClick={()=>{setSelected(l.id);setDetails({...l});}} key={l.id}>
