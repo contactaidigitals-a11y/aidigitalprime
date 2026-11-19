@@ -154,6 +154,14 @@ export default function OutreachPage(){
   const url="mailto:"+encodeURIComponent(lead.email)+"?subject="+encodeURIComponent(lead.subject)+"&body="+encodeURIComponent(body);
   window.location.href=url;
  }
+ async function connectLark(){
+  await submit("lark-connect",async()=>{
+   const response=await fetch("/api/admin/lark/connect",{credentials:"same-origin",cache:"no-store"});
+   const data=await response.json();
+   if(!response.ok||!data.url)throw new Error(data.error||"Could not start Lark connection");
+   window.location.assign(data.url);
+  });
+ }
  async function batchDraft(){
   await submit("batch-draft",async()=>{
    const result=await api("/api/admin/prospects/batch-draft",{limit:10});
@@ -228,6 +236,13 @@ export default function OutreachPage(){
     </section>
     <section className="aidp-panel">
      <div className="aidp-section-heading"><div><h2>Lead pipeline</h2><p>Click a business to prepare outreach or update its status.</p></div></div>
+     <div className="aidp-form-actions" style={{marginBottom:12}}>
+      <button className="aidp-btn aidp-btn-subtle" type="button" disabled={!!busy} onClick={connectLark}>
+       {busy==="lark-connect"?"Connecting…":"Connect Lark Mail"}
+      </button>
+      <small>Authorise your Lark account for saving email drafts; no email is sent.</small>
+     </div>
+
      <div className="aidp-form-actions" style={{marginBottom:12}}>
       <button className="aidp-btn" type="button" disabled={!!busy} onClick={batchDraft}>
        {busy==="batch-draft"?"Generating drafts…":"AI Agent: Draft next 10 emails"}
