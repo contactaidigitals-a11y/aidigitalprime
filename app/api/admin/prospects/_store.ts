@@ -286,7 +286,7 @@ export async function recordScheduledLarkDraft(id:string,draftId:string,subject:
    throw Error("Lead suppressed");
   const at=new Date().toISOString();
   lead.subject=subject.slice(0,220);lead.emailBody=body.slice(0,6000);lead.updatedAt=at;
-  lead.history.push({at,action:"lark-draft",note:"Scheduled draft saved in Sales Lark (draft ID: "+draftId.slice(0,150)+"). Not sent."});
+  lead.history.push({at,action:"lark-draft",note:"Scheduled draft saved in Sales Lark (draft ID: "+draftId.slice(0,150)+"). Unsubscribe link included. Not sent."});
   lead.history=lead.history.slice(-40);
   await commit(leads);
  });
