@@ -24,11 +24,13 @@ function subjectHeader(text:string){
  const safe=text.replace(/[\r\n\x00-\x1f\x7f]/g," ").trim().slice(0,180);
  return /[^\x20-\x7e]/.test(safe)?"=?UTF-8?B?"+Buffer.from(safe,"utf8").toString("base64")+"?=":safe;
 }
-function eml(to:string,subject:string,body:string){
- const content=Buffer.from(body.replace(/\r?\n/g,"\r\n"),"utf8").toString("base64").match(/.{1,76}/g)?.join("\r\n")||"";
+function eml(to:string,subject:string,body:string,unsubscribeUrl:string){
+ const signedBody=body+"\n\nTo stop receiving marketing emails from AI Digital Prime, unsubscribe here:\n"+unsubscribeUrl+"\nYou can also reply unsubscribe.";
+ const content=Buffer.from(signedBody.replace(/\r?\n/g,"\r\n"),"utf8").toString("base64").match(/.{1,76}/g)?.join("\r\n")||"";
  const lines=[
   "From: AI Digital Prime Sales <"+MAILBOX+">","To: <"+to+">",
   "Subject: "+subjectHeader(subject),"MIME-Version: 1.0",
+  "List-Unsubscribe: <"+unsubscribeUrl+">",
   "Content-Type: text/plain; charset=UTF-8","Content-Transfer-Encoding: base64","",content,""
  ];
  return Buffer.from(lines.join("\r\n"),"utf8").toString("base64url");
@@ -117,7 +119,8 @@ export async function POST(req:Request){
      const latest=(await readProspects()).find(p=>p.id===lead.id);
      if(!latest||latest.status==="suppressed"||latest.permission==="do-not-contact"||
         latest.history.some(h=>["unsubscribed","lark-draft","lark-sent"].includes(h.action)))continue;
-     const saved=await larkPost("/drafts",token,{raw:eml(lead.email,draft.subject,draft.body)});
+     const unsubscribeUrl="https://aidigitalprime.co.uk/outreach/unsubscribe?token="+encodeURIComponent(lead.unsubscribeToken);
+     const saved=await larkPost("/drafts",token,{raw:eml(lead.email,draft.subject,draft.body,unsubscribeUrl)});
      const draftId=saved.draft?.id||saved.draft_id;
      if(!draftId){errors++;continue;}
      await recordScheduledLarkDraft(lead.id,draftId,draft.subject,draft.body);
@@ -131,12 +134,15 @@ export async function POST(req:Request){
    const current=await readProspects();
    const alreadySentToday=current.filter(p=>p.history.some(h=>h.action==="lark-sent"&&dayUK(new Date(h.at))===date)).length;
    const sendQuota=Math.min(12,Math.max(0,Math.floor((slot+1)*100/12)-alreadySentToday));
-   const toSend=current.filter(p=>p.permission==="consented"&&Boolean(p.consentEvidence)&&
+   const toSend=current.filter(p=>((p.permission==="consented"&&Boolean(p.consentEvidence))||
+    (p.permission==="corporate-reviewed"&&["ltd","llp"].includes(p.businessType)&&Boolean(p.companyNumber)))&&
     !["suppressed","contacted","replied","interested","meeting","not-interested"].includes(p.status)&&
     !p.history.some(h=>["unsubscribed","lark-sent","email-sent","manual-sent"].includes(h.action))&&
     p.history.some(h=>h.action==="lark-draft"));
    for(const lead of toSend.slice(0,sendQuota)){
     if(timeUK(new Date()).hour>=11)break;
+    const fresh=(await readProspects()).find(p=>p.id===lead.id);
+    if(!fresh||fresh.permission==="do-not-contact"||fresh.status==="suppressed"||fresh.history.some(h=>h.action==="unsubscribed"))continue;
     const event=[...lead.history].reverse().find(h=>h.action==="lark-draft");
     const draftId=event?.note.match(/draft ID: ([^)]+)\)/)?.[1];
     if(!draftId)continue;
