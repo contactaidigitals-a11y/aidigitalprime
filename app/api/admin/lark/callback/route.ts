@@ -1,7 +1,6 @@
 import { createCipheriv, createHash, randomBytes } from "node:crypto";
 import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { isAdmin } from "../../_auth";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 const ROOT=process.env.AIDP_USAGE_DATA_DIR||"/data/aidp-usage";
@@ -9,7 +8,6 @@ const OAUTH=path.join(ROOT,"lark-oauth");
 const TOKENS=path.join(ROOT,"lark-tokens.enc");
 const back=(status:string)=>Response.redirect("https://aidigitalprime.co.uk/admin/outreach?lark="+encodeURIComponent(status),303);
 export async function GET(req:Request){
- if(!await isAdmin(req))return new Response("Log in to AI Digital Prime Admin before authorising Lark.",{status:401,headers:{"Cache-Control":"no-store"}});
  const url=new URL(req.url),state=url.searchParams.get("state")||"",code=url.searchParams.get("code")||"";
  if(!/^[a-f0-9]{48}$/.test(state)||!code||code.length>2048)return back("invalid");
  const file=path.join(OAUTH,state+".json");
