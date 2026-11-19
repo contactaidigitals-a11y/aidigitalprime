@@ -135,6 +135,20 @@ export default function OutreachPage(){
    setNotice(action==="redraft"?"Draft regenerated.":action==="suppress"?"Contact suppressed.":"Manual send recorded.");
   });
  }
+ async function copyDraftForLark(lead:Prospect){
+  if(!lead.email || !lead.subject.trim() || !lead.emailBody.trim()){
+   setError("This prospect needs an email address, subject and draft body first.");return;
+  }
+  try{
+   await navigator.clipboard.writeText(
+    "To: "+lead.email+"\nSubject: "+lead.subject+"\n\n"+lead.emailBody
+   );
+   setNotice("Draft copied. Open Lark Mail, create a new message and paste it. Nothing has been sent.");
+   setError("");
+  }catch{
+   setError("Clipboard access was blocked by the browser. Copy the subject and body from the fields below.");
+  }
+ }
  function mailTo(lead:Prospect){
   const body=lead.emailBody+"\n\nTo opt out of future emails, reply unsubscribe.";
   const url="mailto:"+encodeURIComponent(lead.email)+"?subject="+encodeURIComponent(lead.subject)+"&body="+encodeURIComponent(body);
@@ -255,6 +269,7 @@ export default function OutreachPage(){
       <button className="aidp-btn" type="submit" disabled={!!busy}>{busy==="save"?"Saving…":"Save lead & draft"}</button>
       <button className="aidp-btn aidp-btn-subtle" type="button" disabled={!!busy} onClick={()=>act("redraft")}>Regenerate draft from saved facts</button>
       <button className="aidp-btn aidp-btn-subtle" type="button" disabled={!!busy} onClick={aiDraft}>{busy==="ai-draft"?"Writing…":"Generate with AI"}</button>
+      {details.email&&details.status!=="suppressed"&&details.permission!=="do-not-contact"&&<button className="aidp-btn aidp-btn-subtle" type="button" onClick={()=>copyDraftForLark(details)}>Copy draft for Lark</button>}
       {details.email&&details.permission==="corporate-reviewed"&&details.status!=="suppressed"&&<button className="aidp-btn aidp-btn-subtle" type="button" onClick={()=>mailTo(details)}>Open in email app</button>}
       {details.email&&details.permission==="corporate-reviewed"&&<button className="aidp-btn aidp-btn-subtle" type="button" disabled={!!busy} onClick={()=>act("manual-sent")}>Mark manually sent</button>}
       {details.email&&details.permission==="consented"&&<button className="aidp-btn aidp-btn-subtle" type="button" disabled={!!busy} onClick={optedInSend}>Send opted-in email</button>}
