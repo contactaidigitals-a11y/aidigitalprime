@@ -8,7 +8,7 @@ export async function GET(req:Request){
  const day=londonDate(new Date()),prospects=await readProspects();
  const drafts=prospects.filter(p=>p.history.some(h=>h.action==="lark-draft"&&londonDate(new Date(h.at))===day)).length;
  const sent=prospects.filter(p=>p.history.some(h=>h.action==="lark-sent"&&londonDate(new Date(h.at))===day)).length;
- const eligible=prospects.filter(p=>p.permission!=="do-not-contact"&&/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(p.email)&&
+ const eligible=prospects.filter(p=>p.permission!=="do-not-contact"&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)&&
   !["suppressed","contacted","not-interested","replied","interested","meeting"].includes(p.status)&&
   !p.history.some(h=>["unsubscribed","lark-draft","lark-sent","manual-sent","email-sent"].includes(h.action))).length;
  return noStore({day,goal:100,drafts,sent,eligible,window:"09:00–11:00 Europe/London",
