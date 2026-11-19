@@ -136,6 +136,16 @@ export default function OutreachPage(){
    setNotice(action==="redraft"?"Draft regenerated.":action==="suppress"?"Contact suppressed.":"Manual send recorded.");
   });
  }
+ async function saveLarkDraft(){
+  if(!details)return;
+  await submit("save-lark-draft",async()=>{
+   const result=await api("/api/admin/prospects/lark-draft",{id:details.id});
+   const list=(await api("/api/admin/prospects")).leads as Prospect[];
+   setLeads(list);
+   setDetails(list.find(x=>x.id===details.id)||null);
+   setNotice(result.message);
+  });
+ }
  async function copyDraftForLark(lead:Prospect){
   if(!lead.email || !lead.subject.trim() || !lead.emailBody.trim()){
    setError("This prospect needs an email address, subject and draft body first.");return;
@@ -294,14 +304,17 @@ export default function OutreachPage(){
       <button className="aidp-btn" type="submit" disabled={!!busy}>{busy==="save"?"Saving…":"Save lead & draft"}</button>
       <button className="aidp-btn aidp-btn-subtle" type="button" disabled={!!busy} onClick={()=>act("redraft")}>Regenerate draft from saved facts</button>
       <button className="aidp-btn aidp-btn-subtle" type="button" disabled={!!busy} onClick={aiDraft}>{busy==="ai-draft"?"Writing…":"Generate with AI"}</button>
-      {details.email&&details.status!=="suppressed"&&details.permission!=="do-not-contact"&&<button className="aidp-btn aidp-btn-subtle" type="button" onClick={()=>copyDraftForLark(details)}>Copy draft for Lark</button>}
+      {details.email&&details.status!=="suppressed"&&details.permission!=="do-not-contact"&&
+       <button className="aidp-btn aidp-btn-subtle" type="button" disabled={!!busy||details.history.some(h=>h.action==="lark-draft")} onClick={saveLarkDraft}>
+        {busy==="save-lark-draft"?"Saving to Lark…":details.history.some(h=>h.action==="lark-draft")?"Draft saved in Lark":"Save draft in Lark Mail"}
+       </button>}
       {details.email&&details.permission==="corporate-reviewed"&&details.status!=="suppressed"&&<button className="aidp-btn aidp-btn-subtle" type="button" onClick={()=>mailTo(details)}>Open in email app</button>}
       {details.email&&details.permission==="corporate-reviewed"&&<button className="aidp-btn aidp-btn-subtle" type="button" disabled={!!busy} onClick={()=>act("manual-sent")}>Mark manually sent</button>}
       {details.email&&details.permission==="consented"&&<button className="aidp-btn aidp-btn-subtle" type="button" disabled={!!busy} onClick={optedInSend}>Send opted-in email</button>}
       {details.status!=="suppressed"&&<button className="aidp-btn aidp-btn-danger" type="button" disabled={!!busy} onClick={()=>{if(window.confirm("Block all future marketing to this company?"))act("suppress")}}>Do not contact</button>}
      </div>
     </form>
-    <p className="aidp-footnote">Changes must be saved before emailing. Resend is only used for contacts with documented consent. For cold corporate B2B outreach, use a manually reviewed, compliant email provider. The dashboard does not access your inbox automatically, so replies must currently be marked manually.</p>
+    <p className="aidp-footnote">Changes must be saved before creating a Lark draft. Saving a Lark draft never sends an email. Resend is only used for contacts with documented consent. For cold corporate B2B outreach, use a manually reviewed, compliant email provider. The dashboard does not access your inbox automatically, so replies must currently be marked manually.</p>
     <h3 className="aidp-history-heading">Activity history</h3>
     <div className="aidp-history">{(details.history||[]).slice().reverse().map((h,i)=><div key={i}><strong>{statusLabel(h.action)}</strong><span>{new Date(h.at).toLocaleString("en-GB")}</span><p>{h.note}</p></div>)}</div>
    </section>}
