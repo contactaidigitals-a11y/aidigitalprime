@@ -229,9 +229,9 @@ export default function OutreachPage(){
     {campaign&&<div className="aidp-kpis">
      <div className="aidp-kpi"><span>Drafts today</span><strong>{campaign.drafts} / {campaign.goal}</strong></div>
      <div className="aidp-kpi"><span>Sent today</span><strong>{campaign.sent}</strong><small>{campaign.sendingEnabled?"Opted-in contacts only":"Automatic sending OFF — Lark send permission required"}</small></div>
-     <div className="aidp-kpi"><span>Remaining qualified leads</span><strong>{campaign.eligible}</strong><small>Corporate reviewed / consented</small></div>
+     <div className="aidp-kpi"><span>Leads available for draft creation</span><strong>{campaign.eligible}</strong><small>Includes unverified CRM imports; send requires consent</small></div>
     </div>}
-    <p className="aidp-footnote">No unverified contacts, opt-outs or prior-contacted leads are included. Draft generation is automatic; sending remains disabled until Lark send scope is granted and reauthorised.</p>
+    <p className="aidp-footnote">Imported prospects with valid addresses may receive drafts only. Automatic sending requires documented consent; unsubscribed and previously contacted leads are excluded.</p>
    </section>
    <div className="aidp-outreach-grid">
     <section className="aidp-panel">
