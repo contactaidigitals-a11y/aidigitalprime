@@ -1,5 +1,5 @@
 import { createHash, timingSafeEqual } from "node:crypto";
-import { importProspects } from "../_store";
+import { importProspects, markExistingImportedProspectsOwnerReviewed } from "../_store";
 import { noStore } from "../../_auth";
 
 export const runtime="nodejs";
@@ -18,7 +18,11 @@ export async function POST(req:Request){
  if(!authorized(req))return noStore({error:"Not authorized"},401);
  if(Number(req.headers.get("content-length")||0)>160000)return noStore({error:"Batch too large"},413);
  try{
-  const body=await req.json() as {leads?:unknown};
+  const body=await req.json() as {leads?:unknown;action?:unknown};
+  if(body.action==="mark-owner-reviewed"){
+   const result=await markExistingImportedProspectsOwnerReviewed();
+   return noStore({ok:true,...result});
+  }
   if(!Array.isArray(body.leads)||body.leads.length>100)return noStore({error:"Expected up to 100 leads"},400);
   const rows=body.leads.filter(v=>v&&typeof v==="object"&&!Array.isArray(v)).map(v=>{
    const raw=v as Record<string,unknown>;
