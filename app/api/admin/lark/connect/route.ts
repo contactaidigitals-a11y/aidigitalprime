@@ -18,7 +18,7 @@ export async function GET(req:Request){
  url.searchParams.set("client_id",id);
  url.searchParams.set("response_type","code");
  url.searchParams.set("redirect_uri",redirectUri);
- url.searchParams.set("scope","mail:user_mailbox.message:modify mail:user_mailbox.message:send offline_access");
+ url.searchParams.set("scope","mail:user_mailbox.message:modify mail:user_mailbox.message:send mail:user_mailbox:readonly offline_access");
  url.searchParams.set("state",state);
  return noStore({url:url.toString(),redirectUri});
 }
