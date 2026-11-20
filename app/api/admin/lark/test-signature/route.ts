@@ -36,7 +36,7 @@ export async function POST(req:Request){
  try{
   const markerDir=process.env.AIDP_USAGE_DATA_DIR||"/data/aidp-usage";
   await mkdir(markerDir,{recursive:true});
-  try{ const claim=await open(markerDir+"/tracelio-signature-test-20261120.claim","wx",0o600); await claim.close(); }
+  try{ const claim=await open(markerDir+"/tracelio-signature-test-20261120-second.claim","wx",0o600); await claim.close(); }
   catch(e){ if((e as NodeJS.ErrnoException).code==="EEXIST")return noStore({ok:false,error:"Single test already attempted. Cannot send twice."},409); throw e; }
   const token=await larkAccessToken(),draft=await larkPost(token,"/drafts",{raw:makeMime()});
   const id=String((draft.draft as {id?:string}|undefined)?.id||draft.draft_id||"");
