@@ -58,12 +58,12 @@ async function writeAI(ids:Array<{id:string;business:string;industry:string;loca
   "Personalise with the exact business name and, only when useful, its confirmed sector or location. Make the AI Receptionist benefit relevant to that kind of business, but never assert it misses calls, loses bookings, is understaffed or has a problem unless independently verified.",
   "Write like a thoughtful human founder or small-business sales representative, not an AI or a mass-marketing template. Be warm, confident, straightforward and understated.",
   "Never use 'I hope this email finds you well', 'Dear [Company]', 'streamline your customer interactions', 'transform', 'revolutionise', 'unlock', 'cutting-edge', 'game-changer', 'seamlessly', 'leverage', 'exciting opportunity', 'Would you like to know more?', hype, exclamation marks, generic compliments or emoji.",
-  "Recommended structure: natural opening ('Hi [Business] team,' or 'Hello,'), one short sentence explaining why the service could be useful to a business like theirs, one or two plain-English sentences explaining what it actually does, one simple offer sentence, one low-pressure specific question, then a clean sign-off.",
-  "AI Receptionist specifically: describe that it can answer routine customer calls and capture enquiries when staff are busy or outside opening hours; never promise functions, integrations or guaranteed results not supplied in CRM. State the exact offer: first month free for testing with 50 call minutes included, then £100 per month, plus 50% off the one-time setup fee. Do not suggest the £100 price itself is discounted. Do not invent setup price, dates, eligibility, minute overage, free setup or cancellation policies.",
+  "Recommended structure: greet the business briefly (for example, 'Hi [Business] team,'). Immediately after the greeting, introduce yourself in the first person: 'I'm Andrei, the founder and CEO of AI Digital Prime.' Then explain the relevant business benefit, the free test offer, and ask one low-pressure question. Write as Andrei personally, not as an anonymous sales department.",
+  "AI Receptionist: say it can answer routine customer calls and capture enquiries when staff are busy or after hours. Mention ONLY the first month free for testing with 50 call minutes included, plus 50% off the one-time setup fee. Never mention £100, the regular monthly subscription price, or the price after the trial. Do not invent other prices, discounts, conditions, integrations or guarantees.",
   "For other services (Chatbot, Website, New Business Launch), describe only the matching service and never apply the receptionist price or trial offer.",
   "Keep body between 65 and 105 words including sign-off, with short readable paragraphs of 1-2 sentences. No bullet lists, no forced personalisation or awkward repetition. Subject line 3-7 words, plain and specific; no clickbait or ALL CAPS. If context is sparse, write a modest general introduction rather than inventing research.",
-  "End exactly with 'Kind regards,\\nAI Digital Prime\\nhttps://aidigitalprime.co.uk'. Do not include a second unsubscribe sentence or any unsubscribe link in the AI-written body; our verified sending system appends the recipient-specific unsubscribe link and reply-to-unsubscribe instructions automatically.",
-  "Never invent a named individual, previous contact, partnership, social proof, measurable benefit, research, prices or guarantees. Never mention the recipient's private personal information.",
+  "Finish the entire AI-written email exactly with 'Kind regards,\\nAndrei'. Nothing after Andrei. Do not include unsubscribe instructions or links in the AI body; the Lark sending system appends one recipient-specific opt-out footer automatically.",
+  "The sender is Andrei, founder and CEO of AI Digital Prime. Never invent any other named individual, earlier relationship, specific research, measurable benefit, testimonial, price or guarantee. No private details about recipients.",
   "Return only valid JSON in the exact format {drafts:[{id,subject,body}]} with one item for every input id. No markdown and no extra text.",
  ].join("\n");
  const response=await fetch("https://api.openai.com/v1/responses",{
@@ -81,12 +81,13 @@ async function writeAI(ids:Array<{id:string;business:string;industry:string;loca
  return (output.drafts||[]).filter(x=>typeof x.id==="string"&&allowed.has(x.id)&&
    typeof x.subject==="string"&&typeof x.body==="string")
   .map(x=>{
-   let body=String(x.body).trim().slice(0,4500);
-   if(!/AI Digital Prime/i.test(body))body+="\n\nAI Digital Prime";
-   if(!/aidigitalprime\.co\.uk/i.test(body))body+="\nhttps://aidigitalprime.co.uk";
-   // Sender appends the per-recipient unsubscribe link and reply instructions once.
+   const body=String(x.body).trim().slice(0,4500);
+   if(!/I(?:'|’| a)m Andrei, the founder and CEO of AI Digital Prime\./i.test(body))return null;
+   if(/£\s*100|100\s*(?:pounds|GBP)|per month|monthly price|after (?:the |your )?(?:trial|free month)/i.test(body))return null;
+   if(!/Kind regards,\s*Andrei\s*$/i.test(body))return null;
+   // The actual email sender appends the per-recipient unsubscribe footer once.
    return {id:String(x.id),subject:String(x.subject).replace(/[\r\n]/g," ").trim().slice(0,180),body};
-  }).filter(x=>x.subject&&x.body);
+  }).filter((x):x is {id:string;subject:string;body:string}=>Boolean(x&&x.subject&&x.body));
 }
 async function larkPost(path:string,token:string,body:Record<string,unknown>){
  const response=await fetch("https://open.larksuite.com/open-apis/mail/v1/user_mailboxes/"+encodeURIComponent(MAILBOX)+path,{
