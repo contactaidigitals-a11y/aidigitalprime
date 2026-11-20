@@ -24,14 +24,37 @@ function subjectHeader(text:string){
  const safe=text.replace(/[\r\n\x00-\x1f\x7f]/g," ").trim().slice(0,180);
  return /[^\x20-\x7e]/.test(safe)?"=?UTF-8?B?"+Buffer.from(safe,"utf8").toString("base64")+"?=":safe;
 }
+const BANNER_URL="https://d2ol7oe51mr4n9.cloudfront.net/user_3LJoSTMyomjJ6AKq0N0Yy00mBQl/bce4f86d-6ef9-4a11-a637-aea8e036bfdd.jpg";
+const SIGNATURE_TEXT="Kind Regards,\nAndrei Calinescu\nfounder | AI Digital Prime";
+function base64lines(value:string){
+ return Buffer.from(value.replace(/\r?\n/g,"\r\n"),"utf8").toString("base64").match(/.{1,76}/g)?.join("\r\n")||"";
+}
+function escapeHtml(value:string){
+ return value.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
 function eml(to:string,subject:string,body:string,unsubscribeUrl:string){
- const signedBody=body+"\n\nTo stop receiving marketing emails from AI Digital Prime, unsubscribe here:\n"+unsubscribeUrl+"\nYou can also reply unsubscribe.";
- const content=Buffer.from(signedBody.replace(/\r?\n/g,"\r\n"),"utf8").toString("base64").match(/.{1,76}/g)?.join("\r\n")||"";
+ // Use a remotely hosted, original 96KB banner. CID attachment in a test email
+ // did not render in the recipient mailbox; never include a truncated test image.
+ const footer="To stop receiving marketing emails from AI Digital Prime, unsubscribe here:\n"+unsubscribeUrl+"\nYou can also reply unsubscribe.";
+ const textPart=body+"\n\n"+SIGNATURE_TEXT+"\nhttps://aidigitalprime.co.uk\n\n"+footer;
+ const paragraphs=body.trim().split(/\n\s*\n/).map(part=>'<p style="margin:0 0 15px;line-height:1.55;">'+escapeHtml(part).replace(/\n/g,"<br>")+"</p>").join("");
+ const html='<html><body style="background:#fff;margin:0;padding:16px;color:#202a30;font-family:Arial,Helvetica,sans-serif;font-size:15px;">'
+  +'<div style="max-width:620px;">'+paragraphs
+  +'<div style="font-size:15px;line-height:1.65;margin:22px 0 10px;">Kind Regards,<br>Andrei Calinescu<br>founder | AI Digital Prime</div>'
+  +'<a href="https://aidigitalprime.co.uk" style="display:block;max-width:600px;">'
+  +'<img src="'+BANNER_URL+'" alt="AI Digital Prime — Every enquiry deserves an answer" width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;"></a>'
+  +'<p style="font-size:12px;line-height:1.5;color:#555;margin-top:20px;">To stop receiving marketing emails from AI Digital Prime, '
+  +'<a href="'+escapeHtml(unsubscribeUrl)+'">unsubscribe here</a>. You can also reply unsubscribe.</p>'
+  +'</div></body></html>';
+ const boundary="aidp-alt-"+createHash("sha256").update(to+subject).digest("hex").slice(0,20);
  const lines=[
-  "From: AI Digital Prime Sales <"+MAILBOX+">","To: <"+to+">",
+  "From: Andrei Calinescu | AI Digital Prime <"+MAILBOX+">","To: <"+to+">",
   "Subject: "+subjectHeader(subject),"MIME-Version: 1.0",
   "List-Unsubscribe: <"+unsubscribeUrl+">",
-  "Content-Type: text/plain; charset=UTF-8","Content-Transfer-Encoding: base64","",content,""
+  'Content-Type: multipart/alternative; boundary="'+boundary+'"',"",
+  "--"+boundary,"Content-Type: text/plain; charset=UTF-8","Content-Transfer-Encoding: base64","",base64lines(textPart),
+  "--"+boundary,"Content-Type: text/html; charset=UTF-8","Content-Transfer-Encoding: base64","",base64lines(html),
+  "--"+boundary+"--",""
  ];
  return Buffer.from(lines.join("\r\n"),"utf8").toString("base64url");
 }
