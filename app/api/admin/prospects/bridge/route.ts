@@ -1,5 +1,5 @@
 import { createHash, timingSafeEqual } from "node:crypto";
-import { importProspects, markExistingImportedProspectsOwnerReviewed } from "../_store";
+import { importProspects, readProspects, markExistingImportedProspectsOwnerReviewed } from "../_store";
 import { noStore } from "../../_auth";
 
 export const runtime="nodejs";
@@ -52,4 +52,20 @@ export async function POST(req:Request){
   if(/limit|large|required|invalid/i.test(message))return noStore({error:message},400);
   return noStore({error:"CRM bridge import failed"},503);
  }
+}
+
+export async function GET(req:Request){
+ if(!authorized(req))return noStore({error:"Not authorized"},401);
+ const leads=await readProspects();
+ const day=new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/London",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
+ const onDay=(at:string)=>new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/London",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(at))===day;
+ const drafts=leads.filter(x=>x.history.some(h=>h.action==="lark-draft"&&onDay(h.at)));
+ const sent=leads.filter(x=>x.history.some(h=>h.action==="lark-sent"&&onDay(h.at)));
+ return noStore({ok:true,day,total:leads.length,withEmail:leads.filter(x=>Boolean(x.email)).length,
+  ownerReviewed:leads.filter(x=>x.permission==="owner-reviewed").length,
+  readyToSend:leads.filter(x=>["owner-reviewed","corporate-reviewed","consented"].includes(x.permission)&&Boolean(x.email)&&!x.lastContactAt&&!["suppressed","contacted","replied","interested","meeting","not-interested"].includes(x.status)&&!x.history.some(h=>["unsubscribed","lark-sent","manual-sent","email-sent"].includes(h.action))).length,
+  draftsToday:drafts.length,sentToday:sent.length,
+  lastDraftAt:drafts.map(x=>x.history.filter(h=>h.action==="lark-draft"&&onDay(h.at)).at(-1)?.at).filter(Boolean).sort().at(-1)||null,
+  lastSentAt:sent.map(x=>x.history.filter(h=>h.action==="lark-sent"&&onDay(h.at)).at(-1)?.at).filter(Boolean).sort().at(-1)||null
+ });
 }
