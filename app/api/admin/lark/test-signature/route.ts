@@ -1,3 +1,4 @@
+import { open, mkdir } from "node:fs/promises";
 import { createHash,timingSafeEqual } from "node:crypto";
 import { noStore } from "../../_auth";
 import { larkAccessToken } from "../_tokens";
@@ -33,6 +34,10 @@ export async function POST(req:Request){
  if(!allowed(req))return noStore({error:"Not authorized"},401);
  if(req.headers.get("x-aidp-one-test")!=="Tracelio-email-signature-test")return noStore({error:"Explicit single-test header missing"},400);
  try{
+  const markerDir=process.env.AIDP_USAGE_DATA_DIR||"/data/aidp-usage";
+  await mkdir(markerDir,{recursive:true});
+  try{ const claim=await open(markerDir+"/tracelio-signature-test-20261120.claim","wx",0o600); await claim.close(); }
+  catch(e){ if((e as NodeJS.ErrnoException).code==="EEXIST")return noStore({ok:false,error:"Single test already attempted. Cannot send twice."},409); throw e; }
   const token=await larkAccessToken(),draft=await larkPost(token,"/drafts",{raw:makeMime()});
   const id=String((draft.draft as {id?:string}|undefined)?.id||draft.draft_id||"");
   if(!id)throw Error("Lark did not return draft ID; nothing was sent");
