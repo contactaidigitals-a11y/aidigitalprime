@@ -32,9 +32,15 @@ function base64lines(value:string){
 function escapeHtml(value:string){
  return value.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
-function eml(to:string,subject:string,body:string,unsubscribeUrl:string){
- // Use a remotely hosted, original 96KB banner. CID attachment in a test email
- // did not render in the recipient mailbox; never include a truncated test image.
+async function eml(to:string,subject:string,body:string,unsubscribeUrl:string){
+ // Embed the complete original branded JPG as a genuine inline MIME part.
+ // Externally hosted-only images may be hidden by recipients' privacy settings.
+ const imageResponse=await fetch(BANNER_URL,{signal:AbortSignal.timeout(12000),cache:"no-store"});
+ if(!imageResponse.ok)throw Error("Brand signature image unavailable: "+imageResponse.status);
+ const imageBytes=Buffer.from(await imageResponse.arrayBuffer());
+ if(imageBytes.length<50_000||imageBytes.length>1_000_000||
+    imageBytes[0]!==0xff||imageBytes[1]!==0xd8||imageBytes[2]!==0xff)
+  throw Error("Incomplete or invalid signature JPEG; email withheld");
  const footer="To stop receiving marketing emails from AI Digital Prime, unsubscribe here:\n"+unsubscribeUrl+"\nYou can also reply unsubscribe.";
  const textPart=body+"\n\n"+SIGNATURE_TEXT+"\nhttps://aidigitalprime.co.uk\n\n"+footer;
  const paragraphs=body.trim().split(/\n\s*\n/).map(part=>'<p style="margin:0 0 15px;line-height:1.55;">'+escapeHtml(part).replace(/\n/g,"<br>")+"</p>").join("");
@@ -42,18 +48,26 @@ function eml(to:string,subject:string,body:string,unsubscribeUrl:string){
   +'<div style="max-width:620px;">'+paragraphs
   +'<div style="font-size:15px;line-height:1.65;margin:22px 0 10px;">Kind Regards,<br>Andrei Calinescu<br>founder | AI Digital Prime</div>'
   +'<a href="https://aidigitalprime.co.uk" style="display:block;max-width:600px;">'
-  +'<img src="'+BANNER_URL+'" alt="AI Digital Prime — Every enquiry deserves an answer" width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;"></a>'
+  +'<img src="cid:aidp-original-signature-banner" alt="AI Digital Prime — Every enquiry deserves an answer" width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;"></a>'
   +'<p style="font-size:12px;line-height:1.5;color:#555;margin-top:20px;">To stop receiving marketing emails from AI Digital Prime, '
   +'<a href="'+escapeHtml(unsubscribeUrl)+'">unsubscribe here</a>. You can also reply unsubscribe.</p>'
   +'</div></body></html>';
- const boundary="aidp-alt-"+createHash("sha256").update(to+subject).digest("hex").slice(0,20);
+ const boundary="aidp-related-"+createHash("sha256").update(to+subject).digest("hex").slice(0,20);
+ const alt=boundary+"-alt";
+ const embedded=imageBytes.toString("base64").match(/.{1,76}/g)?.join("\r\n")||"";
  const lines=[
   "From: Andrei Calinescu | AI Digital Prime <"+MAILBOX+">","To: <"+to+">",
   "Subject: "+subjectHeader(subject),"MIME-Version: 1.0",
   "List-Unsubscribe: <"+unsubscribeUrl+">",
-  'Content-Type: multipart/alternative; boundary="'+boundary+'"',"",
-  "--"+boundary,"Content-Type: text/plain; charset=UTF-8","Content-Transfer-Encoding: base64","",base64lines(textPart),
-  "--"+boundary,"Content-Type: text/html; charset=UTF-8","Content-Transfer-Encoding: base64","",base64lines(html),
+  'Content-Type: multipart/related; boundary="'+boundary+'"; type="multipart/alternative"',"",
+  "--"+boundary,
+  'Content-Type: multipart/alternative; boundary="'+alt+'"',"",
+  "--"+alt,"Content-Type: text/plain; charset=UTF-8","Content-Transfer-Encoding: base64","",base64lines(textPart),
+  "--"+alt,"Content-Type: text/html; charset=UTF-8","Content-Transfer-Encoding: base64","",base64lines(html),
+  "--"+alt+"--",
+  "--"+boundary,'Content-Type: image/jpeg; name="aidp-original-signature.jpg"',"Content-Transfer-Encoding: base64",
+  "Content-ID: <aidp-original-signature-banner>",'Content-Disposition: inline; filename="aidp-original-signature.jpg"',
+  "",embedded,
   "--"+boundary+"--",""
  ];
  return Buffer.from(lines.join("\r\n"),"utf8").toString("base64url");
@@ -152,7 +166,7 @@ export async function POST(req:Request){
      if(!latest||latest.status==="suppressed"||latest.permission==="do-not-contact"||
         latest.history.some(h=>["unsubscribed","lark-draft","lark-sent"].includes(h.action)))continue;
      const unsubscribeUrl="https://aidigitalprime.co.uk/outreach/unsubscribe?token="+encodeURIComponent(lead.unsubscribeToken);
-     const saved=await larkPost("/drafts",token,{raw:eml(lead.email,draft.subject,draft.body,unsubscribeUrl)});
+     const saved=await larkPost("/drafts",token,{raw:await eml(lead.email,draft.subject,draft.body,unsubscribeUrl)});
      const draftId=saved.draft?.id||saved.draft_id;
      if(!draftId){errors++;continue;}
      await recordScheduledLarkDraft(lead.id,draftId,draft.subject,draft.body);
